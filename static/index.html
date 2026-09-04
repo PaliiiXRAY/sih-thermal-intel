@@ -176,11 +176,14 @@
             <div class="bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyber-card border border-cyber-border rounded-xl p-5 shadow-xl space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <div class="flex items-center gap-2.5">
+                        <div class="flex flex-wrap items-center gap-2.5">
                             <span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-400 border border-slate-700 font-bold" id="incIdBadge">#INC-2026-0042</span>
                             <h2 class="text-lg font-bold text-white" id="incTitle">Similipal Forest Fire</h2>
                             <span id="incRiskBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold font-mono uppercase bg-red-950 text-red-400 border border-red-800">
                                 DANGER LEVEL: 87/100 (CRITICAL)
+                            </span>
+                            <span id="incConfidenceBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold font-mono uppercase bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1.5">
+                                <i data-lucide="satellite" class="w-3.5 h-3.5"></i> SATELLITE CONFIDENCE: 91% (HIGH)
                             </span>
                         </div>
                         <p class="text-xs text-slate-400 mt-1" id="incLocation">Similipal National Park, Mayurbhanj District, Odisha &bull; Detected: 11:42 IST</p>
@@ -342,6 +345,36 @@
                             <ul id="explainCounterList" class="space-y-1 text-slate-300 pl-4 list-disc text-[11px]">
                                 <li>Possible light cloud haze on western edge (20%)</li>
                             </ul>
+                        </div>
+
+                        <!-- Satellite Detection Confidence & Safeguard Breakdown -->
+                        <div class="bg-cyan-950/20 border border-cyan-800/40 rounded-lg p-3 space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <div class="font-bold text-cyan-300 flex items-center gap-1.5">
+                                    <i data-lucide="satellite" class="w-3.5 h-3.5"></i> How sure is the satellite? (False Alarm Safeguard)
+                                </div>
+                                <span id="confRatingBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                                    91% CONFIDENCE (HIGH)
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] font-mono pt-0.5">
+                                <div class="bg-slate-950/70 p-2 rounded border border-slate-800">
+                                    <span class="text-slate-500 block text-[9px]">INFRARED HEAT SIGNAL:</span>
+                                    <span id="confSensor" class="text-slate-200 font-bold">96% (Sharp contrast)</span>
+                                </div>
+                                <div class="bg-slate-950/70 p-2 rounded border border-slate-800">
+                                    <span class="text-slate-500 block text-[9px]">MULTI-SATELLITE CHECK:</span>
+                                    <span id="confCross" class="text-slate-200 font-bold">2 repeat passes</span>
+                                </div>
+                                <div class="bg-slate-950/70 p-2 rounded border border-slate-800">
+                                    <span class="text-slate-500 block text-[9px]">CLOUD INTERFERENCE:</span>
+                                    <span id="confCloud" class="text-slate-200 font-bold">Low (20% haze)</span>
+                                </div>
+                            </div>
+                            <div class="text-[11px] text-slate-300 bg-slate-900/80 p-2 rounded border border-slate-800 flex items-start gap-1.5">
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-cyan-400 mt-0.5 shrink-0"></i>
+                                <span id="confProtocol">Confidence >85% qualifies for direct fire brigade alert. If confidence is low, a drone is dispatched first to avoid false alarms.</span>
+                            </div>
                         </div>
                     </div>
                 </div>

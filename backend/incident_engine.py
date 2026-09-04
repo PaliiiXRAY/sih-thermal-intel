@@ -17,6 +17,14 @@ INCIDENTS = {
         "location_name": "Similipal National Park, Mayurbhanj District, Odisha",
         "classification": "WILDFIRE",
         "confidence": 91,
+        "confidence_breakdown": {
+            "score": 91,
+            "rating": "HIGH",
+            "sensor_signal": "96% (Sharp 4µm thermal infrared contrast)",
+            "cross_satellite": "Confirmed by 2 separate satellite passes",
+            "cloud_interference": "Low (20% thin haze on western edge)",
+            "dispatch_protocol": "Confidence >85% qualifies for direct fire brigade alert"
+        },
         "risk_score": 87,
         "risk_label": "CRITICAL",
         "frp_mw": 142.6,
@@ -70,6 +78,14 @@ INCIDENTS = {
         "location_name": "Petrochemical Refining Complex, Jamnagar, Gujarat",
         "classification": "FACTORY FLARE",
         "confidence": 94,
+        "confidence_breakdown": {
+            "score": 94,
+            "rating": "VERY HIGH",
+            "sensor_signal": "98% (Constant high-temp hydrocarbon flare)",
+            "cross_satellite": "48 repeat passes at exact same point",
+            "cloud_interference": "None (Clear coastal atmosphere)",
+            "dispatch_protocol": "Known registered site; zero false alarm risk"
+        },
         "risk_score": 38,
         "risk_label": "SAFE / NORMAL (MONITOR)",
         "frp_mw": 88.4,
@@ -120,6 +136,14 @@ INCIDENTS = {
         "location_name": "Sangrur Agricultural District, Punjab",
         "classification": "CROP SMOKE",
         "confidence": 89,
+        "confidence_breakdown": {
+            "score": 89,
+            "rating": "HIGH",
+            "sensor_signal": "90% (Low-intensity smoke & smoldering)",
+            "cross_satellite": "Cross-verified across agricultural cluster",
+            "cloud_interference": "Low (Clear autumn skies)",
+            "dispatch_protocol": "Confidence >85%: Issues air quality alert to local administration"
+        },
         "risk_score": 62,
         "risk_label": "HIGH (AIR QUALITY IMPACT)",
         "frp_mw": 24.5,
@@ -169,7 +193,15 @@ INCIDENTS = {
         "coordinates": {"lat": 24.1840, "lon": 82.6530},
         "location_name": "Singrauli Scrubland, MP/UP Border",
         "classification": "SUSPICIOUS ACTIVITY",
-        "confidence": 88,
+        "confidence": 78,
+        "confidence_breakdown": {
+            "score": 78,
+            "rating": "MODERATE",
+            "sensor_signal": "82% (Intermittent heat signature)",
+            "cross_satellite": "Stationary coordinate observed on 34 passes",
+            "cloud_interference": "Moderate (Valley dust and haze)",
+            "dispatch_protocol": "Confidence <85%: Automated drone reconnaissance dispatched before ground unit"
+        },
         "risk_score": 79,
         "risk_label": "CRITICAL (NTRO CHECK REQUIRED)",
         "frp_mw": 52.3,

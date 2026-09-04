@@ -105,11 +105,39 @@ function renderIncident(inc) {
     document.getElementById('incLocation').textContent = `${inc.location_name} • ${inc.timestamp}`;
     
     const riskBadge = document.getElementById('incRiskBadge');
-    riskBadge.textContent = `RISK SCORE: ${inc.risk_score}/100 (${inc.risk_label})`;
+    riskBadge.textContent = `DANGER LEVEL: ${inc.risk_score}/100 (${inc.risk_label})`;
     riskBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold font-mono uppercase border " +
         (inc.risk_score >= 75 ? 'bg-red-950 text-red-400 border-red-800' :
          inc.risk_score >= 50 ? 'bg-amber-950 text-amber-400 border-amber-800' :
          'bg-slate-800 text-slate-300 border-slate-700');
+
+    // 2b. Satellite Confidence Badge
+    const confBadge = document.getElementById('incConfidenceBadge');
+    if (confBadge) {
+        const confScore = inc.confidence_breakdown ? inc.confidence_breakdown.score : (inc.confidence || 90);
+        const confRating = inc.confidence_breakdown ? inc.confidence_breakdown.rating : 'HIGH';
+        confBadge.innerHTML = `<i data-lucide="satellite" class="w-3.5 h-3.5"></i> SATELLITE CONFIDENCE: ${confScore}% (${confRating})`;
+        confBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold font-mono uppercase flex items-center gap-1.5 border " +
+            (confScore >= 90 ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
+             confScore >= 80 ? 'bg-cyan-950 text-cyan-300 border-cyan-800' :
+             'bg-amber-950 text-amber-300 border-amber-800');
+    }
+
+    // 2c. Confidence Breakdown Card (False Alarm Safeguard)
+    if (inc.confidence_breakdown) {
+        const cb = inc.confidence_breakdown;
+        if (document.getElementById('confRatingBadge')) {
+            document.getElementById('confRatingBadge').textContent = `${cb.score}% CONFIDENCE (${cb.rating})`;
+            document.getElementById('confRatingBadge').className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded border " +
+                (cb.score >= 90 ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
+                 cb.score >= 80 ? 'bg-cyan-950 text-cyan-300 border-cyan-800' :
+                 'bg-amber-950 text-amber-300 border-amber-800');
+        }
+        if (document.getElementById('confSensor')) document.getElementById('confSensor').textContent = cb.sensor_signal;
+        if (document.getElementById('confCross')) document.getElementById('confCross').textContent = cb.cross_satellite;
+        if (document.getElementById('confCloud')) document.getElementById('confCloud').textContent = cb.cloud_interference;
+        if (document.getElementById('confProtocol')) document.getElementById('confProtocol').textContent = cb.dispatch_protocol;
+    }
 
     // 3. Lifecycle Stepper
     updateLifecycleStepper(inc.status);
