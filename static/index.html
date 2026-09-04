@@ -44,10 +44,11 @@
             <div>
                 <div class="flex items-center gap-2">
                     <h1 class="text-lg font-bold tracking-wider text-white">AERO<span class="text-orange-400">THERMAL</span></h1>
-                    <span class="px-2 py-0.5 text-xs font-semibold rounded bg-orange-500/20 text-orange-300 border border-orange-500/40">SIH26162</span>
-                    <span class="px-2 py-0.5 text-xs font-semibold rounded bg-red-500/20 text-red-300 border border-red-500/40">NTRO</span>
+                    <span class="px-2 py-0.5 text-xs font-semibold rounded bg-orange-500/20 text-orange-300 border border-orange-500/40 font-mono">SIH26162</span>
+                    <span class="px-2 py-0.5 text-xs font-semibold rounded bg-red-500/20 text-red-300 border border-red-500/40 font-mono">NTRO</span>
                 </div>
-                <p class="text-xs text-slate-300 font-medium">NASA Satellite Fire Detection &bull; Village Danger Warning &bull; Local Fire Station Dispatch</p>
+                <p class="text-xs text-amber-300 font-semibold tracking-wide mt-0.5">Turn satellite detections into prioritized incidents, identify what's at risk, and coordinate the response.</p>
+                <p class="text-[11px] text-slate-400">NASA FIRMS &bull; OpenStreetMap &bull; Satellite Data &bull; AI</p>
             </div>
         </div>
 
@@ -204,7 +205,7 @@
                 <div class="lg:col-span-7 bg-cyber-card border border-cyber-border rounded-xl p-5 shadow-xl space-y-3">
                     <div class="flex items-center justify-between">
                         <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                            <i data-lucide="globe" class="w-4 h-4 text-orange-400"></i> Satellite Heat Map & Wind Danger Zone
+                            <i data-lucide="compass" class="w-4 h-4 text-orange-400"></i> Impact & Spread Risk
                         </h3>
                         <button onclick="toggleMapLayer()" id="layerToggleBtn" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 flex items-center gap-1.5 transition-colors">
                             <i data-lucide="layers" class="w-3.5 h-3.5"></i> Satellite Photo View
@@ -214,12 +215,12 @@
                     <div class="relative w-full h-[460px] rounded-xl overflow-hidden border border-slate-800 shadow-inner">
                         <div id="map" class="w-full h-full z-10"></div>
                         <!-- Impact Corridor HUD overlay -->
-                        <div class="absolute top-3 left-3 z-20 bg-slate-900/90 backdrop-blur-md p-3 rounded-lg border border-slate-700 text-xs space-y-1 font-mono shadow-xl max-w-xs">
+                        <div class="absolute top-3 left-3 z-20 bg-slate-900/90 backdrop-blur-md p-3.5 rounded-lg border border-slate-700 text-xs space-y-1.5 font-mono shadow-xl max-w-xs">
                             <div class="font-bold text-orange-400 flex items-center gap-1.5">
-                                <i data-lucide="wind" class="w-3.5 h-3.5"></i> Where is Smoke/Fire Blowing?
+                                <i data-lucide="wind" class="w-3.5 h-3.5"></i> Potential Downwind Impact Corridor
                             </div>
-                            <div class="text-[11px] text-slate-300" id="corridorText">Wind: NE at 18 km/h &bull; Downwind corridor: 2.8 km</div>
-                            <div class="text-[10px] text-slate-400 italic">Estimated danger area based on live wind speed</div>
+                            <div class="text-[11px] text-slate-200 font-semibold" id="corridorText">Wind: NE at 18 km/h &bull; Potential affected corridor: 2.8 km</div>
+                            <div class="text-[10px] text-slate-400 italic">Estimated area of potential impact based on local wind conditions</div>
                         </div>
                     </div>
                 </div>
@@ -295,24 +296,32 @@
 
                 <!-- Module 2: Explain Classification (Evidence & Counter-evidence) -->
                 <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 shadow-xl space-y-3">
-                    <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2 border-b border-slate-800 pb-2.5">
-                        <i data-lucide="help-circle" class="w-4 h-4 text-purple-400"></i> Why was this fire classified as Wildfire / Factory Flare?
-                    </h3>
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                        <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                            <i data-lucide="help-circle" class="w-4 h-4 text-purple-400"></i> <span id="whyHeader">Why WILDFIRE? (AI Evidence Engine)</span>
+                        </h3>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-bold">EXPLAINABLE AI</span>
+                    </div>
 
                     <div class="space-y-3">
                         <div class="bg-emerald-950/20 border border-emerald-800/40 rounded-lg p-3 space-y-1.5 text-xs">
                             <div class="font-bold text-emerald-400 flex items-center gap-1.5">
                                 <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Clear Proof / Reasons Why:
                             </div>
-                            <ul id="explainEvidenceList" class="space-y-1 text-slate-300 pl-4 list-disc text-[11px]">
+                            <ul id="explainEvidenceList" class="space-y-1.5 text-slate-300 pl-4 list-disc text-[11px]">
+                                <li>Forest land cover (OSM: natural=wood)</li>
+                                <li>Thermal activity detected across multiple satellite overpasses</li>
+                                <li>Increasing affected footprint over 3 consecutive days (+42%)</li>
+                                <li>No registered industrial facilities within 12 km radius</li>
                             </ul>
                         </div>
 
                         <div class="bg-amber-950/20 border border-amber-800/40 rounded-lg p-3 space-y-1.5 text-xs">
                             <div class="font-bold text-amber-400 flex items-center gap-1.5">
-                                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Things the AI Double-Checked:
+                                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Things the AI Double-Checked (Known Limits):
                             </div>
                             <ul id="explainCounterList" class="space-y-1 text-slate-300 pl-4 list-disc text-[11px]">
+                                <li>20% cloud haze contamination possible along western perimeter</li>
                             </ul>
                         </div>
                     </div>
@@ -320,9 +329,12 @@
 
                 <!-- Module 3: Local Historical Baseline (This Specific Location) -->
                 <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 shadow-xl space-y-3">
-                    <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2 border-b border-slate-800 pb-2.5">
-                        <i data-lucide="history" class="w-4 h-4 text-cyan-400"></i> Fire History of this Exact Spot (Last 60 Days)
-                    </h3>
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                        <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                            <i data-lucide="history" class="w-4 h-4 text-cyan-400"></i> Fire History of this Exact Spot (Last 60 Days)
+                        </h3>
+                        <span class="text-[10px] font-mono text-cyan-400 font-bold">LOCAL 375m CELL</span>
+                    </div>
 
                     <div class="bg-slate-900/80 border border-slate-800 rounded-lg p-4 space-y-3 text-xs font-mono">
                         <div class="grid grid-cols-2 gap-3">
@@ -337,8 +349,8 @@
                         </div>
 
                         <div class="p-3 bg-red-950/30 border border-red-800/40 rounded-lg text-red-300">
-                            <div class="font-bold mb-0.5" id="baseRatio">6.0× above normal seasonal levels</div>
-                            <p class="text-[11px] text-slate-300" id="baseVerdict">Unprecedented local thermal surge. Confirmed dangerous fire requiring immediate fire engine dispatch.</p>
+                            <div class="font-bold mb-0.5 text-amber-300" id="baseRatio">6× above historical baseline</div>
+                            <p class="text-[11px] text-slate-300" id="baseVerdict">6× above historical baseline. High-priority anomaly requiring ground verification.</p>
                         </div>
                     </div>
                 </div>
@@ -351,6 +363,27 @@
         <!-- VIEW 2: FIRST RESPONDER VIEW (THE DEMO KILLER) -->
         <!-- ========================================== -->
         <div id="viewFirstResponder" class="hidden space-y-6">
+
+            <!-- Obvious Perspective Handover Banner (Winning Demo Feature) -->
+            <div class="bg-gradient-to-r from-slate-900 via-cyan-950/70 to-slate-900 border-2 border-cyan-500/50 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+                <div class="flex items-center gap-2 sm:gap-3 text-slate-300">
+                    <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700 font-bold flex items-center gap-1.5">
+                        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5 text-orange-400"></i> CONTROL ROOM
+                    </span>
+                    <span class="text-cyan-400 font-bold">&longrightarrow;</span>
+                    <span class="px-2.5 py-1 rounded bg-red-950 text-red-300 border border-red-800 font-bold flex items-center gap-1.5">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i> Dispatched Incident #INC-0042
+                    </span>
+                    <span class="text-cyan-400 font-bold">&longrightarrow;</span>
+                    <span class="px-2.5 py-1 rounded bg-cyan-900 text-cyan-200 border border-cyan-500 font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                        <i data-lucide="truck" class="w-3.5 h-3.5 text-cyan-300"></i> FIELD RESPONDER VIEW
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="text-emerald-400 font-bold text-[11px]">LIVE FIELD MOBILE TERMINAL</span>
+                </div>
+            </div>
 
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3">

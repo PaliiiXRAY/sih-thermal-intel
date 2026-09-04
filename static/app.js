@@ -127,6 +127,9 @@ function renderIncident(inc) {
     document.getElementById('authSecondary').textContent = inc.assigned_authority.secondary_agency;
 
     // 7. Explain Classification ("Why?")
+    if (document.getElementById('whyHeader')) {
+        document.getElementById('whyHeader').textContent = `Why ${inc.classification}? (AI Evidence)`;
+    }
     const evList = document.getElementById('explainEvidenceList');
     evList.innerHTML = '';
     inc.explain_classification.evidence.forEach(item => {

@@ -45,14 +45,14 @@ INCIDENTS = {
         "local_baseline": {
             "location_history_passes": 6,
             "normal_seasonal_range": "0-1 passes / 60 days",
-            "anomaly_ratio": "6.0× above historical seasonal baseline",
-            "verdict": "Unprecedented local thermal surge (Confirmed Anomaly)"
+            "anomaly_ratio": "6× above historical baseline",
+            "verdict": "6× above historical baseline. High-priority anomaly requiring ground verification."
         },
         "wind_corridor": {
             "speed_kmh": 18,
             "direction": "North-East (NE)",
             "potential_corridor_km": 2.8,
-            "description": "Potential downwind smoke and ember impact corridor: 2.8 km heading North-East"
+            "description": "Wind: NE at 18 km/h • Potential affected corridor: 2.8 km"
         },
         "assets_at_risk": [
             {"asset": "Village Kaptipada (Settlement)", "type": "Habitation", "population": "1,420 people", "distance_km": 1.4, "risk_tier": "CRITICAL", "color": "red"},
