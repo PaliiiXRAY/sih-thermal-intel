@@ -147,7 +147,7 @@ function renderIncident(inc) {
     });
 
     // 8. Historical Local Baseline
-    document.getElementById('basePasses').textContent = `${inc.local_baseline.location_history_passes} passes in 60 days`;
+    document.getElementById('basePasses').textContent = `${inc.local_baseline.location_history_passes} times in past 60 days`;
     document.getElementById('baseRange').textContent = inc.local_baseline.normal_seasonal_range;
     document.getElementById('baseRatio').textContent = inc.local_baseline.anomaly_ratio;
     document.getElementById('baseVerdict').textContent = inc.local_baseline.verdict;
@@ -250,7 +250,7 @@ async function dispatchGroundAlert() {
 
     const btn = document.getElementById('btnDispatchAlert');
     btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> TRANSMITTING ENCRYPTED ALERT...`;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Sending Alert to Fire Station...`;
     lucide.createIcons();
 
     try {
@@ -267,7 +267,7 @@ async function dispatchGroundAlert() {
         alertBox.className = "p-3 rounded-lg border border-emerald-500/50 bg-emerald-950/30 text-xs flex items-center gap-3";
         document.getElementById('dispatchIcon').className = "w-4 h-4 text-emerald-400";
         document.getElementById('dispatchStatusText').innerHTML = 
-            `<strong>ALERT TRANSMITTED:</strong> ${res.dispatched_to} (ETA: ${res.eta}) &bull; Simulated emergency dispatch acknowledged.`;
+            `<strong>✅ Alert Sent:</strong> ${res.dispatched_to} notified (ETA: ${res.eta}). Field team dispatched.`;
 
         // Flash badge on First Responder view tab
         document.getElementById('responderPendingBadge').classList.remove('hidden');
@@ -279,7 +279,7 @@ async function dispatchGroundAlert() {
         console.error(e);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> DISPATCHED // ALERT CONFIRMED`;
+        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> ✅ Alert Sent to Fire Station!`;
         lucide.createIcons();
     }
 }
@@ -291,16 +291,16 @@ function renderResponderView(inc) {
     document.getElementById('frIncCoords').textContent = `Location: ${inc.coordinates.lat.toFixed(4)}°N, ${inc.coordinates.lon.toFixed(4)}°E • Distance: ${inc.assigned_authority.distance_km} km • ETA: ${inc.assigned_authority.eta_mins} mins`;
 
     const statusBadge = document.getElementById('frCurrentStatusBadge');
-    statusBadge.textContent = inc.status;
+    statusBadge.textContent = inc.status === 'NEW' ? 'ALERT RECEIVED' : inc.status;
     statusBadge.className = "text-sm font-mono font-bold px-3 py-1 rounded-full uppercase border " +
         (inc.status === 'RESOLVED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' :
          inc.status === 'CONTAINED' ? 'bg-purple-950 text-purple-400 border-purple-800' :
          inc.status === 'EN ROUTE' || inc.status === 'ARRIVED' ? 'bg-amber-950 text-amber-400 border-amber-800' :
          'bg-cyan-950 text-cyan-400 border-cyan-800');
 
-    document.getElementById('frFrp').textContent = `${inc.frp_mw} MegaWatts`;
+    document.getElementById('frFrp').textContent = `Very high heat intensity (${inc.frp_mw} MW)`;
     document.getElementById('frHabitation').textContent = inc.assets_at_risk[0] ? inc.assets_at_risk[0].asset : 'No nearby village';
-    document.getElementById('frWind').textContent = `${inc.wind_corridor.direction} at ${inc.wind_corridor.speed_kmh} km/h`;
+    document.getElementById('frWind').textContent = `Spreading ${inc.wind_corridor.direction} at ${inc.wind_corridor.speed_kmh} km/h`;
 
     // Highlight active state button
     const states = ['ACKNOWLEDGED', 'EN ROUTE', 'ARRIVED', 'CONTAINED', 'RESOLVED'];

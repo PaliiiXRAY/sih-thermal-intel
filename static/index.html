@@ -178,7 +178,7 @@
                     <div>
                         <div class="flex items-center gap-2.5">
                             <span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-400 border border-slate-700 font-bold" id="incIdBadge">#INC-2026-0042</span>
-                            <h2 class="text-lg font-bold text-white" id="incTitle">Similipal Biosphere Reserve Canopy Fire</h2>
+                            <h2 class="text-lg font-bold text-white" id="incTitle">Similipal Forest Fire</h2>
                             <span id="incRiskBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold font-mono uppercase bg-red-950 text-red-400 border border-red-800">
                                 DANGER LEVEL: 87/100 (CRITICAL)
                             </span>
@@ -188,9 +188,9 @@
 
                     <!-- Dispatch SOS Button (The Winning Action Trigger) -->
                     <div class="flex items-center gap-3">
-                        <button onclick="dispatchGroundAlert()" id="btnDispatchAlert" class="px-4 py-2.5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-950/60 border border-red-400/40 flex items-center gap-2 transition-all">
+                        <button onclick="dispatchGroundAlert()" id="btnDispatchAlert" class="px-5 py-2.5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-950/60 border border-red-400/40 flex items-center gap-2 transition-all">
                             <i data-lucide="send" class="w-4 h-4"></i>
-                            <span>🚨 ALERT LOCAL FIRE STATION NOW (SIMULATE DISPATCH)</span>
+                            <span>🚨 Send Alert to Nearest Fire Station</span>
                         </button>
                     </div>
                 </div>
@@ -224,7 +224,7 @@
                 <div class="lg:col-span-7 bg-cyber-card border border-cyber-border rounded-xl p-5 shadow-xl space-y-3">
                     <div class="flex items-center justify-between">
                         <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                            <i data-lucide="crosshair" class="w-4 h-4 text-orange-400"></i> 🔭 Detect Fires from Space (Impact & Spread Risk)
+                            <i data-lucide="crosshair" class="w-4 h-4 text-orange-400"></i> 🔭 Detect Fires from Space (Danger & Spread)
                         </h3>
                         <button onclick="toggleMapLayer()" id="layerToggleBtn" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 flex items-center gap-1.5 transition-colors">
                             <i data-lucide="layers" class="w-3.5 h-3.5"></i> Satellite Photo View
@@ -236,10 +236,10 @@
                         <!-- Impact Corridor HUD overlay -->
                         <div class="absolute top-3 left-3 z-20 bg-slate-900/90 backdrop-blur-md p-3.5 rounded-lg border border-slate-700 text-xs space-y-1.5 font-mono shadow-xl max-w-xs">
                             <div class="font-bold text-orange-400 flex items-center gap-1.5">
-                                <i data-lucide="wind" class="w-3.5 h-3.5"></i> Potential Downwind Impact Corridor
+                                <i data-lucide="wind" class="w-3.5 h-3.5"></i> Possible danger zone (based on wind)
                             </div>
-                            <div class="text-[11px] text-slate-200 font-semibold" id="corridorText">Wind: NE at 18 km/h &bull; Potential affected corridor: 2.8 km</div>
-                            <div class="text-[10px] text-slate-400 italic">Estimated area of potential impact based on local wind conditions</div>
+                            <div class="text-[11px] text-slate-200 font-semibold" id="corridorText">Wind: NE at 18 km/h &bull; Risk area: ~2.8 km downwind</div>
+                            <div class="text-[10px] text-slate-400 italic">Estimated danger zone based on local wind conditions</div>
                         </div>
                     </div>
                 </div>
@@ -303,7 +303,7 @@
                         <!-- Simulated Alert Dispatch Feedback Banner -->
                         <div id="dispatchAlertBox" class="p-3 rounded-lg border border-slate-800 bg-slate-900 text-xs flex items-center gap-3">
                             <i data-lucide="radio" class="w-4 h-4 text-slate-500" id="dispatchIcon"></i>
-                            <span class="text-slate-400" id="dispatchStatusText">Simulated ground alert channel on standby. Awaiting dispatch.</span>
+                            <span class="text-slate-400" id="dispatchStatusText">Ready to alert the fire station.</span>
                         </div>
                     </div>
 
@@ -317,30 +317,30 @@
                 <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 shadow-xl space-y-3">
                     <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
                         <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                            <i data-lucide="brain" class="w-4 h-4 text-purple-400"></i> <span id="whyHeader">🧠 What Type of Fire? (AI Evidence Engine)</span>
+                            <i data-lucide="brain" class="w-4 h-4 text-purple-400"></i> <span id="whyHeader">🧠 Why the system thinks this is a wildfire</span>
                         </h3>
-                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-bold">EXPLAINABLE AI</span>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-bold">SIMPLE EXPLANATION</span>
                     </div>
 
                     <div class="space-y-3">
                         <div class="bg-emerald-950/20 border border-emerald-800/40 rounded-lg p-3 space-y-1.5 text-xs">
                             <div class="font-bold text-emerald-400 flex items-center gap-1.5">
-                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Clear Proof / Reasons Why:
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Why the system thinks this:
                             </div>
                             <ul id="explainEvidenceList" class="space-y-1.5 text-slate-300 pl-4 list-disc text-[11px]">
-                                <li>Forest land cover (OSM: natural=wood)</li>
-                                <li>Thermal activity detected across multiple satellite overpasses</li>
-                                <li>Increasing affected footprint over 3 consecutive days (+42%)</li>
-                                <li>No registered industrial facilities within 12 km radius</li>
+                                <li>Fire area grew by +42% over the last 3 days</li>
+                                <li>Located in dense protected forest land (natural woodland)</li>
+                                <li>No factories or industrial chimneys anywhere within 12 km</li>
+                                <li>Very high heat intensity indicating active burning forest trees</li>
                             </ul>
                         </div>
 
                         <div class="bg-amber-950/20 border border-amber-800/40 rounded-lg p-3 space-y-1.5 text-xs">
                             <div class="font-bold text-amber-400 flex items-center gap-1.5">
-                                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Things the AI Double-Checked (Known Limits):
+                                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Double-checked limitations:
                             </div>
                             <ul id="explainCounterList" class="space-y-1 text-slate-300 pl-4 list-disc text-[11px]">
-                                <li>20% cloud haze contamination possible along western perimeter</li>
+                                <li>Possible light cloud haze on western edge (20%)</li>
                             </ul>
                         </div>
                     </div>
@@ -350,26 +350,26 @@
                 <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 shadow-xl space-y-3">
                     <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
                         <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                            <i data-lucide="history" class="w-4 h-4 text-cyan-400"></i> ⏱️ Is This a Real Fire? (History of this Spot)
+                            <i data-lucide="history" class="w-4 h-4 text-cyan-400"></i> ⏱️ Has this place burned before?
                         </h3>
-                        <span class="text-[10px] font-mono text-cyan-400 font-bold">LOCAL 375m CELL</span>
+                        <span class="text-[10px] font-mono text-cyan-400 font-bold">PAST 60 DAYS</span>
                     </div>
 
                     <div class="bg-slate-900/80 border border-slate-800 rounded-lg p-4 space-y-3 text-xs font-mono">
                         <div class="grid grid-cols-2 gap-3">
                             <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                                <span class="text-slate-500 block text-[10px]">PAST SATELLITE DETECTIONS:</span>
-                                <span class="text-cyan-300 font-bold" id="basePasses">6 passes in 60 days</span>
+                                <span class="text-slate-500 block text-[10px]">PAST FIRES DETECTED:</span>
+                                <span class="text-cyan-300 font-bold" id="basePasses">6 times in past 60 days</span>
                             </div>
                             <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                                <span class="text-slate-500 block text-[10px]">NORMAL EXPECTED FIRES:</span>
-                                <span class="text-slate-300 font-bold" id="baseRange">0-1 passes / 60 days</span>
+                                <span class="text-slate-500 block text-[10px]">NORMAL FOR THIS AREA:</span>
+                                <span class="text-slate-300 font-bold" id="baseRange">0-1 times / 60 days</span>
                             </div>
                         </div>
 
                         <div class="p-3 bg-red-950/30 border border-red-800/40 rounded-lg text-red-300">
-                            <div class="font-bold mb-0.5 text-amber-300" id="baseRatio">6× above historical baseline</div>
-                            <p class="text-[11px] text-slate-300" id="baseVerdict">6× above historical baseline. High-priority anomaly requiring ground verification.</p>
+                            <div class="font-bold mb-0.5 text-amber-300" id="baseRatio">Very unusual activity</div>
+                            <p class="text-[11px] text-slate-300" id="baseVerdict">This location normally has almost no fire activity. High-priority alert requiring immediate ground check.</p>
                         </div>
                     </div>
                 </div>
@@ -400,7 +400,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span class="text-emerald-400 font-bold text-[11px]">LIVE FIELD MOBILE TERMINAL</span>
+                    <span class="text-emerald-400 font-bold text-[11px]">FIELD TERMINAL ACTIVE</span>
                 </div>
             </div>
 
@@ -414,12 +414,13 @@
                             <h2 class="text-lg font-bold text-white">BARIPADA FIRE & EMERGENCY SERVICES</h2>
                             <span class="px-2 py-0.5 text-xs font-mono font-bold rounded bg-cyan-950 text-cyan-300 border border-cyan-800">FIELD UNIT #4</span>
                         </div>
-                        <p class="text-xs text-slate-400">Mobile Tactical Ground Response Terminal &bull; Similipal Forest North Beat</p>
+                        <p class="text-xs text-slate-400">Field Response Team &bull; Baripada Station</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <span class="text-[11px] text-slate-400 font-mono block">GPS SYNC: ONLINE</span>
-                    <span class="text-xs font-bold text-emerald-400 font-mono">ENCRYPTED DISPATCH LINK ACTIVE</span>
+                    <span class="text-xs font-bold text-emerald-400 font-mono flex items-center gap-1.5 justify-end">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Connected to Control Room
+                    </span>
                 </div>
             </div>
 
@@ -429,16 +430,16 @@
                     <div>
                         <div class="flex items-center gap-2.5">
                             <span class="text-sm font-mono font-bold px-2.5 py-0.5 rounded bg-red-950 text-red-300 border border-red-800" id="frIncId">#INC-2026-0042</span>
-                            <h3 class="text-xl font-bold text-white" id="frIncTitle">Similipal Biosphere Reserve Canopy Fire</h3>
+                            <h3 class="text-xl font-bold text-white" id="frIncTitle">Similipal Forest Fire</h3>
                         </div>
-                        <p class="text-xs text-slate-400 mt-1 font-mono" id="frIncCoords">Coordinates: 21.8540°N, 86.3520°E &bull; Distance: 14.2 km &bull; ETA: 25 mins</p>
+                        <p class="text-xs text-slate-400 mt-1 font-mono" id="frIncCoords">Location: 21.8540°N, 86.3520°E &bull; Distance: 14.2 km &bull; ETA: 25 mins</p>
                     </div>
 
                     <!-- Current Field Status Badge -->
                     <div class="text-right">
                         <span class="text-[10px] text-slate-400 uppercase font-mono block">Current Field Status</span>
                         <span id="frCurrentStatusBadge" class="text-sm font-mono font-bold px-3 py-1 rounded-full uppercase bg-cyan-950 text-cyan-400 border border-cyan-800">
-                            NEW DISPATCH
+                            ALERT RECEIVED
                         </span>
                     </div>
                 </div>
@@ -446,23 +447,23 @@
                 <!-- Tactical Summary for Ground Team -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
                     <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
-                        <span class="text-slate-500 block text-[10px]">INTENSITY / FRP:</span>
-                        <span class="text-lg font-bold text-orange-400" id="frFrp">142.6 MegaWatts</span>
+                        <span class="text-slate-500 block text-[10px]">HEAT INTENSITY:</span>
+                        <span class="text-base font-bold text-orange-400" id="frFrp">Very high heat intensity (142 MW)</span>
                     </div>
                     <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
-                        <span class="text-slate-500 block text-[10px]">IMMEDIATE HABITATION AT RISK:</span>
-                        <span class="text-lg font-bold text-red-400" id="frHabitation">Village Kaptipada (1,420 pop)</span>
+                        <span class="text-slate-500 block text-[10px]">PEOPLE AT RISK:</span>
+                        <span class="text-base font-bold text-red-400" id="frHabitation">Village Kaptipada (1,420 people)</span>
                     </div>
                     <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
-                        <span class="text-slate-500 block text-[10px]">WIND SPREAD CORRIDOR:</span>
-                        <span class="text-lg font-bold text-amber-400" id="frWind">NE at 18 km/h</span>
+                        <span class="text-slate-500 block text-[10px]">DANGER ZONE / WIND:</span>
+                        <span class="text-base font-bold text-amber-400" id="frWind">Spreading North-East at 18 km/h</span>
                     </div>
                 </div>
 
                 <!-- State Machine Progression Buttons (The Live Demo Loop!) -->
                 <div class="space-y-2 pt-2">
                     <div class="text-xs text-slate-300 font-bold flex items-center gap-1.5">
-                        <i data-lucide="check-square" class="w-4 h-4 text-cyan-400"></i> ✅ Did They Respond? Update Field Tactical State (Syncs Live with Control Room):
+                        <i data-lucide="check-square" class="w-4 h-4 text-cyan-400"></i> ✅ Did They Respond? Update Field Status (Syncs Live with Control Room):
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
                         <button onclick="updateResponderStatus('ACKNOWLEDGED')" id="btnStat-ACKNOWLEDGED" class="p-3 rounded-lg bg-slate-800 hover:bg-cyan-600 font-bold text-xs text-slate-200 transition-all text-center border border-slate-700">
@@ -485,11 +486,11 @@
 
                 <!-- Ground Truth Feedback Field -->
                 <div class="p-4 bg-slate-950 rounded-lg border border-slate-800 text-xs space-y-2">
-                    <span class="font-bold text-slate-300">Ground Truth Verification & Sensor Feedback:</span>
-                    <textarea id="frFeedbackNotes" rows="2" placeholder="Field notes: e.g., 'Controlled backburn deployed along western boundary. Evacuation alert issued to Kaptipada Ward 2.'" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-slate-300 font-mono resize-none"></textarea>
+                    <span class="font-bold text-slate-300">Field team confirmation:</span>
+                    <textarea id="frFeedbackNotes" rows="2" placeholder="Field notes: e.g., 'Fire contained along western boundary. Evacuation alert issued to Kaptipada Ward 2.'" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-slate-300 font-mono resize-none"></textarea>
                     <div class="flex justify-between items-center text-[10px] text-slate-500 font-mono">
-                        <span>Incident logs are sealed with cryptographic SHA-256 for state audit</span>
-                        <span class="text-emerald-400">GROUND TRUTH STORED FOR FUTURE ML RETRAINING</span>
+                        <span>Field notes and on-site verification are saved to the incident log</span>
+                        <span class="text-emerald-400 font-bold">GROUND STATUS VERIFIED</span>
                     </div>
                 </div>
             </div>
