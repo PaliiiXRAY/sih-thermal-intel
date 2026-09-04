@@ -128,7 +128,7 @@ function renderIncident(inc) {
 
     // 7. Explain Classification ("Why?")
     if (document.getElementById('whyHeader')) {
-        document.getElementById('whyHeader').textContent = `Why ${inc.classification}? (AI Evidence)`;
+        document.getElementById('whyHeader').textContent = `🧠 What Type of Fire? (Why ${inc.classification}?)`;
     }
     const evList = document.getElementById('explainEvidenceList');
     evList.innerHTML = '';
