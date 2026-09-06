@@ -1,466 +1,441 @@
-// AeroThermal Incident & First Responder Engine (SIH26162)
-let map = null;
-let currentLayer = 'dark';
-let darkTiles = null;
-let satTiles = null;
-let markersLayer = null;
-let activeIncident = null;
-let allIncidents = {};
+// FireSense Client Application - SIH26162
+let currentPortal = 'command';
+let currentNtroFilter = 'all';
+let currentLanguage = 'en';
+
+// Sample Data for NTRO Intelligence (Matching Figma)
+const ntroIncidents = [
+    {
+        id: 'INC-2846', time: '03:55 UTC', location: 'Malkangiri, Odisha',
+        category: 'wildfire', label: 'Wildfire', severity: 'HIGH',
+        confidence: 91, coords: '18.92°N • 82.10°E',
+        temp: '623°C', area: '12.8 km²', source: 'VIIRS',
+        facility: 'Dense Forest Reserve', matchText: 'Dense Forest Reserve • Odisha Forest & Protected Land Database',
+        wind: 'Surface Wind: NE at 18 km/h • Downwind Threat Corridor: 2.8 km (toward NH-326)'
+    },
+    {
+        id: 'INC-2845', time: '03:41 UTC', location: 'Mehsana, Gujarat',
+        category: 'gas-flare', label: 'Gas Flare', severity: 'ROUTINE',
+        confidence: 99, coords: '23.60°N • 72.40°E',
+        temp: '412°C', area: '0.4 km²', source: 'VIIRS',
+        facility: 'ONGC Extraction Unit 4', matchText: 'Licensed Gas Flare Facility • Gujarat Industrial Development Corp',
+        wind: 'Surface Wind: W at 9 km/h • Downwind Threat Corridor: 0.2 km (Enclosed Perimeter)'
+    },
+    {
+        id: 'INC-2844', time: '02:18 UTC', location: 'Ropar, Punjab',
+        category: 'crop-burning', label: 'Crop Burning', severity: 'MODERATE',
+        confidence: 88, coords: '30.97°N • 76.53°E',
+        temp: '350°C', area: '3.2 km²', source: 'MODIS',
+        facility: 'Agricultural Farmland Block B', matchText: 'Farmland Cluster • Punjab Remote Sensing Centre (PRSC)',
+        wind: 'Surface Wind: NW at 14 km/h • Downwind Threat Corridor: 1.5 km (Smoke plume over State Hwy)'
+    },
+    {
+        id: 'INC-2843', time: '01:47 UTC', location: 'Faridabad, Haryana',
+        category: 'illegal', label: 'Illegal', severity: 'ALERT',
+        confidence: 84, coords: '28.41°N • 77.31°E',
+        temp: '480°C', area: '0.8 km²', source: 'VIIRS',
+        facility: 'Unauthorized Waste Dump', matchText: 'Municipal Buffer Zone • Haryana State Pollution Control Board',
+        wind: 'Surface Wind: E at 11 km/h • Downwind Threat Corridor: 0.9 km (toward Residential Sector 58)'
+    },
+    {
+        id: 'INC-2842', time: '01:12 UTC', location: 'Vadodara, Gujarat',
+        category: 'industrial', label: 'Industrial', severity: 'HIGH',
+        confidence: 93, coords: '22.31°N • 73.18°E',
+        temp: '590°C', area: '4.5 km²', source: 'VIIRS',
+        facility: 'Petrochemical Complex Gate 3', matchText: 'Petrochemical Refinement Facility • National Industrial Cadastre',
+        wind: 'Surface Wind: SW at 16 km/h • Downwind Threat Corridor: 2.1 km (Industrial Corridor)'
+    },
+    {
+        id: 'INC-2841', time: '00:29 UTC', location: 'Angul, Odisha',
+        category: 'industrial', label: 'Industrial', severity: 'CRITICAL',
+        confidence: 96, coords: '20.84°N • 85.10°E',
+        temp: '710°C', area: '6.1 km²', source: 'VIIRS',
+        facility: 'Thermal Power & Coal Storage', matchText: 'Thermal Plant Storage Yard • Odisha State Disaster Management',
+        wind: 'Surface Wind: NE at 20 km/h • Downwind Threat Corridor: 3.4 km (Crossing toward NH-55)'
+    }
+];
+
+// Sample Data for Government Command (Matching Figma)
+const cmdZones = [
+    {
+        id: 'angul', name: 'Angul, Odisha', type: 'Industrial', severity: 'CRITICAL',
+        deployedText: '3/4 teams deployed', pop: '82K', teamsCount: '3 / 4',
+        deployedNum: 3, maxTeams: 4, ndrfPercent: 60
+    },
+    {
+        id: 'malkangiri', name: 'Malkangiri, Odisha', type: 'Wildfire', severity: 'HIGH',
+        deployedText: '2/6 teams deployed', pop: '14K', teamsCount: '2 / 6',
+        deployedNum: 2, maxTeams: 6, ndrfPercent: 50
+    },
+    {
+        id: 'vadodara', name: 'Vadodara, Gujarat', type: 'Industrial', severity: 'HIGH',
+        deployedText: '3/3 teams deployed', pop: '45K', teamsCount: '3 / 3',
+        deployedNum: 3, maxTeams: 3, ndrfPercent: 65
+    },
+    {
+        id: 'faridabad', name: 'Faridabad, Haryana', type: 'Illegal', severity: 'ALERT',
+        deployedText: '1/2 teams deployed', pop: '18K', teamsCount: '1 / 2',
+        deployedNum: 1, maxTeams: 2, ndrfPercent: 45
+    },
+    {
+        id: 'ropar', name: 'Ropar, Punjab', type: 'Crop Burning', severity: 'MODERATE',
+        deployedText: '0/1 teams deployed', pop: '16K', teamsCount: '0 / 1',
+        deployedNum: 0, maxTeams: 1, ndrfPercent: 40
+    }
+];
+
+let selectedZoneId = 'angul';
+let selectedNtroId = 'INC-2846';
+
+// Translations for Citizen Services
+const translations = {
+    en: {
+        title: "Disaster Help Services",
+        subtitle: "Find shelter, food, evacuation routes and emergency contacts near you.",
+        sosBtn: "SOS — I Need Help Now",
+        alertsHeading: "Active Alerts Near You",
+        alert1: "Industrial fire in Angul — stay indoors, close windows",
+        alert2: "Wildfire moving NE from Malkangiri forest zone",
+        alert3: "Stubble burning alert — avoid outdoor activity today",
+        servicesHeading: "Services Available",
+        shelter: "Nearest Shelter",
+        hospital: "Emergency Hospital",
+        food: "Food & Water",
+        bus: "Evacuation Bus",
+        fuel: "Fuel Station",
+        helpline: "Emergency Helpline",
+        routeHeading: "Evacuation Route",
+        step1: "🚶 Head to NH-55 via Market Road — avoid Thermal Plant area",
+        step2: "🌉 Cross Brahmani river bridge — open and clear",
+        step3: "🏫 Reach Govt High School — shelter, food, first aid ready",
+        btnMap: "Open Live Map",
+        numHeading: "Emergency Numbers"
+    },
+    hi: {
+        title: "आपदा सहायता सेवाएं",
+        subtitle: "अपने निकटतम राहत शिविर, भोजन, सुरक्षित निकासी मार्ग और आपातकालीन संपर्क प्राप्त करें।",
+        sosBtn: "🆘 आपातकाल (SOS) — तुरंत सहायता चाहिए",
+        alertsHeading: "आपके क्षेत्र में सक्रिय अलर्ट",
+        alert1: "अंगुल में औद्योगिक आग — कृपया घरों के अंदर रहें, खिड़कियां बंद रखें",
+        alert2: "मलकानगिरी वन क्षेत्र से उत्तर-पूर्व की ओर फैल रही दावानल",
+        alert3: "पराली दहन चेतावनी — आज बाहरी गतिविधियों से बचें",
+        servicesHeading: "उपलब्ध आपातकालीन सेवाएं",
+        shelter: "निकटतम राहत शिविर",
+        hospital: "आपातकालीन अस्पताल",
+        food: "भोजन एवं पेयजल केंद्र",
+        bus: "निकासी बस सेवा",
+        fuel: "ईंधन / पेट्रोल पंप",
+        helpline: "आपातकालीन हेल्पलाइन",
+        routeHeading: "सुरक्षित निकासी मार्ग",
+        step1: "🚶 मार्केट रोड से राष्ट्रीय राजमार्ग 55 की ओर जाएं — थर्मल प्लांट क्षेत्र से बचें",
+        step2: "🌉 ब्राह्मणी नदी पुल पार करें — मार्ग खुला एवं सुरक्षित है",
+        step3: "🏫 शासकीय उच्च विद्यालय पहुंचें — आश्रय, भोजन एवं प्राथमिक चिकित्सा तैयार है",
+        btnMap: "लाइव नक्शा खोलें",
+        numHeading: "आपातकालीन नंबर"
+    },
+    od: {
+        title: "ବିପର୍ଯ୍ୟୟ ସହାୟତା ସେବା",
+        subtitle: "ଆପଣଙ୍କ ନିକଟସ୍ଥ ଆଶ୍ରୟସ୍ଥଳୀ, ଖାଦ୍ୟ, ନିରାପଦ ନିଷ୍କ୍ରମଣ ପଥ ଏବଂ ଜରୁରୀକାଳୀନ ଯୋଗାଯୋଗ ଖୋଜନ୍ତୁ।",
+        sosBtn: "🆘 ଜରୁରୀ ସହାୟତା (SOS) — ମୋତେ ତୁରନ୍ତ ସାହାଯ୍ୟ ଦରକାର",
+        alertsHeading: "ଆପଣଙ୍କ ନିକଟରେ ସକ୍ରିୟ ଚେତାବନୀ",
+        alert1: "ଅନୁଗୁଳରେ ଶିଳ୍ପାଞ୍ଚଳ ଅଗ୍ନିକାଣ୍ଡ — ଘରେ ରୁହନ୍ତୁ, ଝରକା ବନ୍ଦ ରଖନ୍ତୁ",
+        alert2: "ମାଲକାନଗିରି ଜଙ୍ଗଲରୁ ଉତ୍ତର-ପୂର୍ବ ଦିଗକୁ ବ୍ୟାପୁଥିବା ନିଆଁ",
+        alert3: "ନଡ଼ା ଜଳିବା ସତର୍କତା — ବାହାରକୁ ଯିବାରୁ ନିବୃତ୍ତ ରୁହନ୍ତୁ",
+        servicesHeading: "ଉପଲବ୍ଧ ସେବାସମୂହ",
+        shelter: "ନିକଟସ୍ଥ ଆଶ୍ରୟସ୍ଥଳୀ",
+        hospital: "ଜରୁରୀକାଳୀନ ଚିକିତ୍ସାଳୟ",
+        food: "ଖାଦ୍ୟ ଓ ପାନୀୟ ଜଳ",
+        bus: "ସ୍ଥାନାନ୍ତର ବସ୍",
+        fuel: "ପେଟ୍ରୋଲ ପମ୍ପ",
+        helpline: "ଜରୁରୀକାଳୀନ ହେଲ୍ପଲାଇନ୍",
+        routeHeading: "ସୁରକ୍ଷିତ ନିଷ୍କ୍ରମଣ ମାର୍ଗ",
+        step1: "🚶 ମାର୍କେଟ ରୋଡ୍ ଦେଇ NH-55 କୁ ଯାଆନ୍ତୁ — ଥର୍ମାଲ ପ୍ଲାଣ୍ଟ ଅଞ୍ଚଳ ଏଡ଼ାନ୍ତୁ",
+        step2: "🌉 ବ୍ରାହ୍ମଣୀ ନଦୀ ପୋଲ ପାର ହୁଅନ୍ତୁ — ମାର୍ଗ ଖୋଲା ଏବଂ ସୁରକ୍ଷିତ",
+        step3: "🏫 ସରକାରୀ ହାଇସ୍କୁଲରେ ପହଞ୍ଚନ୍ତୁ — ଆଶ୍ରୟ, ଖାଦ୍ୟ ଏବଂ ପ୍ରାଥମିକ ଚିକିତ୍ସା ପ୍ରସ୍ତୁତ",
+        btnMap: "ଲାଇଭ ମ୍ୟାପ୍ ଖୋଲନ୍ତୁ",
+        numHeading: "ଜରୁରୀକାଳୀନ ନମ୍ବର"
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
-    initMap();
-    loadAllIncidents();
+    renderNtroIncidents();
+    renderCmdZones();
+    selectZone('angul');
+    selectNtroIncident('INC-2846');
 });
 
-function initMap() {
-    map = L.map('map', {
-        center: [21.8540, 86.3520],
-        zoom: 11,
-        attributionControl: false
-    });
-
-    darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
-    satTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 });
-
-    darkTiles.addTo(map);
-    markersLayer = L.layerGroup().addTo(map);
-}
-
-function toggleMapLayer() {
-    const btn = document.getElementById('layerToggleBtn');
-    if (currentLayer === 'dark') {
-        map.removeLayer(darkTiles);
-        satTiles.addTo(map);
-        currentLayer = 'sat';
-        btn.innerHTML = `<i data-lucide="layers" class="w-3.5 h-3.5"></i> Dark Map`;
-    } else {
-        map.removeLayer(satTiles);
-        darkTiles.addTo(map);
-        currentLayer = 'dark';
-        btn.innerHTML = `<i data-lucide="layers" class="w-3.5 h-3.5"></i> Satellite View`;
-    }
-    lucide.createIcons();
-}
-
-// Switch between Control Room and First Responder View (The Winning Demo Loop!)
-function switchView(viewName) {
-    const btnControl = document.getElementById('btnViewControl');
-    const btnResp = document.getElementById('btnViewResponder');
-    const viewCtrl = document.getElementById('viewControlRoom');
-    const viewRsp = document.getElementById('viewFirstResponder');
-
-    if (viewName === 'control') {
-        viewCtrl.classList.remove('hidden');
-        viewRsp.classList.add('hidden');
-        btnControl.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md";
-        btnResp.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200";
-        setTimeout(() => map.invalidateSize(), 150);
-    } else {
-        viewCtrl.classList.add('hidden');
-        viewRsp.classList.remove('hidden');
-        btnResp.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md";
-        btnControl.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200";
-        document.getElementById('responderPendingBadge').classList.add('hidden');
-    }
-    lucide.createIcons();
-}
-
-async function loadAllIncidents() {
-    try {
-        const resp = await fetch('/api/incidents');
-        const data = await resp.json();
-        data.incidents.forEach(inc => {
-            allIncidents[inc.id] = inc;
-        });
-        selectIncident('INC-2026-0042');
-    } catch (e) {
-        console.error("Failed to fetch incidents:", e);
-    }
-}
-
-async function selectIncident(incidentId) {
-    try {
-        const resp = await fetch(`/api/incident/${incidentId}`);
-        const incident = await resp.json();
-        activeIncident = incident;
-        allIncidents[incident.id] = incident;
-        renderIncident(incident);
-    } catch (e) {
-        console.error("Failed to select incident:", e);
-    }
-}
-
-function renderIncident(inc) {
-    // 1. Highlight Top Queue Cards
-    document.querySelectorAll('.incident-card').forEach(card => {
-        card.classList.remove('ring-2', 'ring-cyan-400');
-    });
-    const activeCard = document.getElementById(`card-${inc.id}`);
-    if (activeCard) activeCard.classList.add('ring-2', 'ring-cyan-400');
-
-    // 2. Control Room Banner
-    document.getElementById('incIdBadge').textContent = `#${inc.id}`;
-    document.getElementById('incTitle').textContent = inc.title;
-    document.getElementById('incLocation').textContent = `${inc.location_name} • ${inc.timestamp}`;
-    
-    const riskBadge = document.getElementById('incRiskBadge');
-    riskBadge.textContent = `DANGER LEVEL: ${inc.risk_score}/100 (${inc.risk_label})`;
-    riskBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold font-mono uppercase border " +
-        (inc.risk_score >= 75 ? 'bg-red-950 text-red-400 border-red-800' :
-         inc.risk_score >= 50 ? 'bg-amber-950 text-amber-400 border-amber-800' :
-         'bg-slate-800 text-slate-300 border-slate-700');
-
-    // 2b. Satellite Confidence Badge
-    const confBadge = document.getElementById('incConfidenceBadge');
-    if (confBadge) {
-        const confScore = inc.confidence_breakdown ? inc.confidence_breakdown.score : (inc.confidence || 90);
-        const confRating = inc.confidence_breakdown ? inc.confidence_breakdown.rating : 'HIGH';
-        confBadge.innerHTML = `<i data-lucide="satellite" class="w-3.5 h-3.5"></i> SATELLITE CONFIDENCE: ${confScore}% (${confRating})`;
-        confBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold font-mono uppercase flex items-center gap-1.5 border " +
-            (confScore >= 90 ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
-             confScore >= 80 ? 'bg-cyan-950 text-cyan-300 border-cyan-800' :
-             'bg-amber-950 text-amber-300 border-amber-800');
-    }
-
-    // 2c. Confidence Breakdown Card (False Alarm Safeguard)
-    if (inc.confidence_breakdown) {
-        const cb = inc.confidence_breakdown;
-        if (document.getElementById('confRatingBadge')) {
-            document.getElementById('confRatingBadge').textContent = `${cb.score}% CONFIDENCE (${cb.rating})`;
-            document.getElementById('confRatingBadge').className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded border " +
-                (cb.score >= 90 ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
-                 cb.score >= 80 ? 'bg-cyan-950 text-cyan-300 border-cyan-800' :
-                 'bg-amber-950 text-amber-300 border-amber-800');
-        }
-        if (document.getElementById('confSensor')) document.getElementById('confSensor').textContent = cb.sensor_signal;
-        if (document.getElementById('confCross')) document.getElementById('confCross').textContent = cb.cross_satellite;
-        if (document.getElementById('confCloud')) document.getElementById('confCloud').textContent = cb.cloud_interference;
-        if (document.getElementById('confProtocol')) document.getElementById('confProtocol').textContent = cb.dispatch_protocol;
-    }
-
-    // 3. Lifecycle Stepper
-    updateLifecycleStepper(inc.status);
-
-    // 4. Map and Downwind Corridor
-    renderMap(inc);
-
-    // 5. Assets at Risk Table (Module 4)
-    renderAssetsAtRisk(inc.assets_at_risk);
-
-    // 6. Authority Routing
-    document.getElementById('authName').textContent = inc.assigned_authority.name;
-    document.getElementById('authEta').textContent = `${inc.assigned_authority.distance_km} km • ETA ${inc.assigned_authority.eta_mins} mins`;
-    document.getElementById('authJurisdiction').textContent = inc.assigned_authority.jurisdiction;
-    document.getElementById('authSecondary').textContent = inc.assigned_authority.secondary_agency;
-
-    // 7. Explain Classification ("Why?")
-    if (document.getElementById('whyHeader')) {
-        document.getElementById('whyHeader').textContent = `🧠 What Type of Fire? (Why ${inc.classification}?)`;
-    }
-    const evList = document.getElementById('explainEvidenceList');
-    evList.innerHTML = '';
-    inc.explain_classification.evidence.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item;
-        evList.appendChild(li);
-    });
-
-    const counterList = document.getElementById('explainCounterList');
-    counterList.innerHTML = '';
-    inc.explain_classification.counter_evidence.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item;
-        counterList.appendChild(li);
-    });
-
-    // 8. Historical Local Baseline
-    document.getElementById('basePasses').textContent = `${inc.local_baseline.location_history_passes} times in past 60 days`;
-    document.getElementById('baseRange').textContent = inc.local_baseline.normal_seasonal_range;
-    document.getElementById('baseRatio').textContent = inc.local_baseline.anomaly_ratio;
-    document.getElementById('baseVerdict').textContent = inc.local_baseline.verdict;
-
-    // 9. Synchronize First Responder View
-    renderResponderView(inc);
-
-    lucide.createIcons();
-}
-
-function updateLifecycleStepper(status) {
-    const steps = ['NEW', 'INVESTIGATING', 'VERIFIED', 'DISPATCHED', 'CONTAINED', 'RESOLVED'];
-    const idx = steps.indexOf(status);
-
-    steps.forEach((s, i) => {
-        const el = document.getElementById(`step-${s}`);
-        if (el) {
-            if (i <= idx) {
-                el.className = "font-bold text-cyan-400";
-            } else {
-                el.className = "text-slate-500";
-            }
+// Portal Switching
+function switchPortal(portalName) {
+    currentPortal = portalName;
+    const portals = ['ntro', 'command', 'citizen'];
+    portals.forEach(p => {
+        const el = document.getElementById(`portal-${p}`);
+        const tab = document.getElementById(`tab-${p}`);
+        if (p === portalName) {
+            el.classList.remove('hidden');
+            tab.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200/80 dark:border-slate-700 transition-all font-bold";
+        } else {
+            el.classList.add('hidden');
+            tab.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-semibold";
         }
     });
 
-    const progressPct = Math.max(16, ((idx + 1) / steps.length) * 100);
-    document.getElementById('lifecycleProgressBar').style.width = `${progressPct}%`;
+    const footerLabel = document.getElementById('txt-footer-portal-label');
+    if (portalName === 'ntro') footerLabel.textContent = "NTRO Intelligence Portal";
+    else if (portalName === 'command') footerLabel.textContent = "Government Command Dashboard";
+    else footerLabel.textContent = "Citizen Services Portal";
+
+    lucide.createIcons();
 }
 
-function renderMap(inc) {
-    markersLayer.clearLayers();
-    map.setView([inc.coordinates.lat, inc.coordinates.lon], 11);
+// Theme Switching
+function setTheme(mode) {
+    const html = document.documentElement;
+    const btnLight = document.getElementById('theme-light');
+    const btnDark = document.getElementById('theme-dark');
+    const btnSystem = document.getElementById('theme-system');
 
-    // Fire Anomaly Circle
-    const circle = L.circleMarker([inc.coordinates.lat, inc.coordinates.lon], {
-        radius: Math.max(10, Math.min(30, inc.frp_mw / 4)),
-        fillColor: inc.risk_score >= 75 ? '#ef4444' : '#f97316',
-        color: '#ffffff',
-        weight: 2,
-        opacity: 0.9,
-        fillOpacity: 0.75,
-        className: 'thermal-flare-icon'
-    }).addTo(markersLayer);
-
-    circle.bindPopup(`
-        <div class="text-xs space-y-1 font-mono">
-            <div class="font-bold text-orange-400 border-b border-slate-700 pb-1">${inc.id}: ${inc.classification}</div>
-            <div><strong>FRP:</strong> ${inc.frp_mw} MW</div>
-            <div><strong>Temp:</strong> ${inc.brightness_c}°C</div>
-            <div><strong>Status:</strong> ${inc.status}</div>
-            <div><strong>Location:</strong> ${inc.location_name}</div>
-        </div>
-    `);
-
-    // Downwind Impact Corridor Cone (Directional approximation)
-    document.getElementById('corridorText').textContent = inc.wind_corridor.description;
-
-    // Render Assets at Risk on Map
-    inc.assets_at_risk.forEach(asset => {
-        const offsetLat = inc.coordinates.lat + (Math.random() - 0.5) * 0.04;
-        const offsetLon = inc.coordinates.lon + (Math.random() - 0.5) * 0.04;
-
-        const assetPin = L.circleMarker([offsetLat, offsetLon], {
-            radius: 5,
-            fillColor: asset.color === 'red' ? '#ef4444' : asset.color === 'orange' ? '#f97316' : '#10b981',
-            color: '#000000',
-            weight: 1,
-            fillOpacity: 0.85
-        }).addTo(markersLayer);
-
-        assetPin.bindPopup(`<strong>${asset.asset}</strong><br>Distance: ${asset.distance_km} km<br>Exposure: ${asset.population}`);
+    [btnLight, btnDark, btnSystem].forEach(b => {
+        b.className = "px-2 py-0.5 rounded flex items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white";
     });
+
+    if (mode === 'dark') {
+        html.classList.add('dark');
+        btnDark.className = "px-2 py-0.5 rounded flex items-center gap-1 bg-slate-700 text-white font-semibold";
+    } else if (mode === 'light') {
+        html.classList.remove('dark');
+        btnLight.className = "px-2 py-0.5 rounded flex items-center gap-1 bg-white shadow-xs text-slate-900 font-semibold";
+    } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) html.classList.add('dark');
+        else html.classList.remove('dark');
+        btnSystem.className = "px-2 py-0.5 rounded flex items-center gap-1 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold";
+    }
 }
 
-function renderAssetsAtRisk(assets) {
-    const tbody = document.getElementById('assetsTableBody');
-    tbody.innerHTML = '';
+// Language Switching
+function setLanguage(lang) {
+    currentLanguage = lang;
+    ['en', 'hi', 'od'].forEach(l => {
+        const btn = document.getElementById(`lang-${l}`);
+        if (l === lang) {
+            btn.className = "px-2.5 py-1 rounded bg-white text-slate-900 font-bold shadow-xs";
+        } else {
+            btn.className = "px-2.5 py-1 rounded text-slate-300 hover:text-white";
+        }
+    });
 
-    assets.forEach(a => {
-        const badgeColor = a.color === 'red' ? 'bg-red-950 text-red-400 border-red-800' :
-                           a.color === 'orange' ? 'bg-orange-950 text-orange-400 border-orange-800' :
-                           a.color === 'yellow' ? 'bg-amber-950 text-amber-400 border-amber-800' :
-                           'bg-emerald-950 text-emerald-400 border-emerald-800';
+    const t = translations[lang];
+    if (!t) return;
 
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-900/60 transition-colors';
-        tr.innerHTML = `
-            <td class="py-2 px-2 font-medium text-slate-200">${a.asset}</td>
-            <td class="py-2 px-2 text-cyan-300">${a.distance_km} km</td>
-            <td class="py-2 px-2 text-slate-400">${a.population}</td>
-            <td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${badgeColor}">${a.risk_tier}</span></td>
+    document.getElementById('txt-citizen-title').textContent = t.title;
+    document.getElementById('txt-citizen-subtitle').textContent = t.subtitle;
+    document.getElementById('txt-sos-btn').textContent = t.sosBtn;
+    document.getElementById('txt-alerts-heading').textContent = t.alertsHeading;
+    document.getElementById('txt-alert-1').textContent = t.alert1;
+    document.getElementById('txt-alert-2').textContent = t.alert2;
+    document.getElementById('txt-alert-3').textContent = t.alert3;
+    document.getElementById('txt-services-heading').textContent = t.servicesHeading;
+    document.getElementById('txt-srv-shelter').textContent = t.shelter;
+    document.getElementById('txt-srv-hospital').textContent = t.hospital;
+    document.getElementById('txt-srv-food').textContent = t.food;
+    document.getElementById('txt-srv-bus').textContent = t.bus;
+    document.getElementById('txt-srv-fuel').textContent = t.fuel;
+    document.getElementById('txt-srv-helpline').textContent = t.helpline;
+    document.getElementById('txt-route-heading').textContent = t.routeHeading;
+    document.getElementById('txt-step-1').innerHTML = t.step1;
+    document.getElementById('txt-step-2').innerHTML = t.step2;
+    document.getElementById('txt-step-3').innerHTML = t.step3;
+    document.getElementById('txt-btn-map').textContent = t.btnMap;
+    document.getElementById('txt-num-heading').textContent = t.numHeading;
+}
+
+// Render NTRO Incidents
+function renderNtroIncidents() {
+    const list = document.getElementById('ntro-incident-list');
+    list.innerHTML = '';
+
+    const filtered = currentNtroFilter === 'all' ? ntroIncidents : ntroIncidents.filter(i => i.category === currentNtroFilter);
+    document.getElementById('ntro-log-count').textContent = `${filtered.length} events`;
+
+    filtered.forEach(inc => {
+        const isSelected = inc.id === selectedNtroId;
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-lg border text-xs cursor-pointer transition-all ${isSelected ? 'border-blue-500 bg-blue-50/40 dark:bg-blue-950/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'}`;
+        div.onclick = () => selectNtroIncident(inc.id);
+
+        const sevBadge = inc.severity === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300' :
+                         inc.severity === 'HIGH' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' :
+                         inc.severity === 'ALERT' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300' :
+                         inc.severity === 'MODERATE' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' :
+                         'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+
+        div.innerHTML = `
+            <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+                <span>${inc.id} &bull; ${inc.time}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${sevBadge}">${inc.severity}</span>
+            </div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white mt-1">${inc.location}</div>
+            <div class="flex items-center justify-between text-[11px] mt-0.5">
+                <span class="text-blue-600 dark:text-blue-400 font-medium">${inc.label}</span>
+                <span class="text-slate-400 font-mono">${inc.confidence}% confidence</span>
+            </div>
         `;
-        tbody.appendChild(tr);
+        list.appendChild(div);
     });
 }
 
-// Module 5: Simulate Ground Alert Dispatch (The Big Stage Trigger)
-async function dispatchGroundAlert() {
-    if (!activeIncident) return;
+function selectNtroIncident(id) {
+    selectedNtroId = id;
+    const inc = ntroIncidents.find(i => i.id === id);
+    if (!inc) return;
 
-    const btn = document.getElementById('btnDispatchAlert');
-    btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Sending Alert to Fire Station...`;
-    lucide.createIcons();
+    renderNtroIncidents();
 
-    try {
-        const resp = await fetch(`/api/incident/${activeIncident.id}/dispatch`, { method: 'POST' });
-        const res = await resp.json();
+    document.getElementById('ntro-facility-tag').textContent = inc.facility;
+    document.getElementById('ntro-detail-title').textContent = inc.location;
+    document.getElementById('ntro-detail-coords').textContent = inc.coords;
+    document.getElementById('ntro-detail-severity').textContent = inc.severity;
+    document.getElementById('ntro-detail-class').textContent = inc.label;
+    document.getElementById('ntro-detail-confidence').textContent = `${inc.confidence}%`;
+    document.getElementById('ntro-detail-temp').textContent = inc.temp;
+    document.getElementById('ntro-detail-area').textContent = inc.area;
+    document.getElementById('ntro-detail-source').textContent = inc.source;
+    document.getElementById('ntro-detail-match').textContent = inc.matchText;
+}
 
-        // Update local state
-        activeIncident.status = 'DISPATCHED';
-        allIncidents[activeIncident.id].status = 'DISPATCHED';
-        updateLifecycleStepper('DISPATCHED');
+function filterNtro(cat) {
+    currentNtroFilter = cat;
+    ['all', 'industrial', 'wildfire', 'gas-flare', 'crop-burning', 'illegal'].forEach(c => {
+        const btn = document.getElementById(`btn-ntro-${c}`);
+        if (c === cat) {
+            btn.className = "px-3 py-1 rounded-md bg-blue-600 text-white shadow-xs font-semibold";
+        } else {
+            btn.className = "px-3 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 font-semibold";
+        }
+    });
+    renderNtroIncidents();
+}
 
-        // Alert Feedback Box
-        const alertBox = document.getElementById('dispatchAlertBox');
-        alertBox.className = "p-3 rounded-lg border border-emerald-500/50 bg-emerald-950/30 text-xs flex items-center gap-3";
-        document.getElementById('dispatchIcon').className = "w-4 h-4 text-emerald-400";
-        document.getElementById('dispatchStatusText').innerHTML = 
-            `<strong>✅ Alert Sent:</strong> ${res.dispatched_to} notified (ETA: ${res.eta}). Field team dispatched.`;
+// Render Government Command Zones
+function renderCmdZones() {
+    const list = document.getElementById('cmd-zone-list');
+    list.innerHTML = '';
 
-        // Flash badge on First Responder view tab
-        document.getElementById('responderPendingBadge').classList.remove('hidden');
+    cmdZones.forEach(z => {
+        const isSelected = z.id === selectedZoneId;
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-lg border text-xs cursor-pointer transition-all ${isSelected ? 'border-blue-500 bg-blue-50/40 dark:bg-blue-950/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'}`;
+        div.onclick = () => selectZone(z.id);
 
-        // Update First Responder screen
-        renderResponderView(activeIncident);
+        const sevBadge = z.severity === 'CRITICAL' ? 'text-red-600 dark:text-red-400 font-bold' :
+                         z.severity === 'HIGH' ? 'text-amber-600 dark:text-amber-400 font-bold' :
+                         z.severity === 'ALERT' ? 'text-orange-600 dark:text-orange-400 font-bold' :
+                         'text-blue-600 dark:text-blue-400 font-bold';
 
-    } catch (e) {
-        console.error(e);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> ✅ Alert Sent to Fire Station!`;
+        div.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-900 dark:text-white text-xs">${z.name}</span>
+                <span class="font-mono text-[10px] uppercase ${sevBadge}">${z.severity}</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] mt-1 text-slate-500">
+                <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">${z.type}</span>
+                <span class="font-mono">${z.deployedText}</span>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function selectZone(id) {
+    selectedZoneId = id;
+    const z = cmdZones.find(item => item.id === id);
+    if (!z) return;
+
+    renderCmdZones();
+
+    document.getElementById('cmd-sel-name').textContent = z.name;
+    document.getElementById('cmd-sel-type-pill').textContent = z.type;
+    document.getElementById('cmd-sel-severity-pill').textContent = z.severity;
+    document.getElementById('cmd-sel-pop').textContent = z.pop;
+    document.getElementById('cmd-sel-teams').textContent = z.teamsCount;
+    document.getElementById('cmd-sel-type').textContent = z.type;
+    document.getElementById('res-ndrf-bar').style.width = `${z.ndrfPercent}%`;
+}
+
+function dispatchTeam() {
+    const z = cmdZones.find(item => item.id === selectedZoneId);
+    if (!z) return;
+
+    if (z.deployedNum < z.maxTeams) {
+        z.deployedNum++;
+        z.teamsCount = `${z.deployedNum} / ${z.maxTeams}`;
+        z.deployedText = `${z.deployedNum}/${z.maxTeams} teams deployed`;
+        z.ndrfPercent = Math.min(100, z.ndrfPercent + 15);
+
+        // Update overall teams counter
+        const teamsEl = document.getElementById('cmd-stat-teams');
+        const currentTotal = parseInt(teamsEl.textContent, 10);
+        teamsEl.textContent = currentTotal + 1;
+
+        selectZone(selectedZoneId);
+
+        const btn = document.getElementById('btn-dispatch');
+        btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i> <span>Dispatched!</span>`;
+        btn.className = "px-5 py-2 bg-emerald-600 text-white rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5";
         lucide.createIcons();
+
+        setTimeout(() => {
+            btn.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i> <span>Dispatch Team</span>`;
+            btn.className = "px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5";
+            lucide.createIcons();
+        }, 2000);
+
+        alert(`✅ Unit Dispatched: NDRF Team #${z.deployedNum} successfully dispatched to ${z.name}!`);
+    } else {
+        alert(`Maximum allocated teams (${z.maxTeams}) already deployed to ${z.name}!`);
     }
 }
 
-// Render the First Responder Field Screen
-function renderResponderView(inc) {
-    document.getElementById('frIncId').textContent = `#${inc.id}`;
-    document.getElementById('frIncTitle').textContent = inc.title;
-    document.getElementById('frIncCoords').textContent = `Location: ${inc.coordinates.lat.toFixed(4)}°N, ${inc.coordinates.lon.toFixed(4)}°E • Distance: ${inc.assigned_authority.distance_km} km • ETA: ${inc.assigned_authority.eta_mins} mins`;
-
-    const statusBadge = document.getElementById('frCurrentStatusBadge');
-    statusBadge.textContent = inc.status === 'NEW' ? 'ALERT RECEIVED' : inc.status;
-    statusBadge.className = "text-sm font-mono font-bold px-3 py-1 rounded-full uppercase border " +
-        (inc.status === 'RESOLVED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' :
-         inc.status === 'CONTAINED' ? 'bg-purple-950 text-purple-400 border-purple-800' :
-         inc.status === 'EN ROUTE' || inc.status === 'ARRIVED' ? 'bg-amber-950 text-amber-400 border-amber-800' :
-         'bg-cyan-950 text-cyan-400 border-cyan-800');
-
-    document.getElementById('frFrp').textContent = `Very high heat intensity (${inc.frp_mw} MW)`;
-    document.getElementById('frHabitation').textContent = inc.assets_at_risk[0] ? inc.assets_at_risk[0].asset : 'No nearby village';
-    document.getElementById('frWind').textContent = `Spreading ${inc.wind_corridor.direction} at ${inc.wind_corridor.speed_kmh} km/h`;
-
-    // Highlight active state button
-    const states = ['ACKNOWLEDGED', 'EN ROUTE', 'ARRIVED', 'CONTAINED', 'RESOLVED'];
-    states.forEach(st => {
-        const btn = document.getElementById(`btnStat-${st}`);
-        if (btn) {
-            if (inc.status === st) {
-                btn.classList.add('ring-2', 'ring-white', 'bg-cyan-600');
-            } else {
-                btn.classList.remove('ring-2', 'ring-white', 'bg-cyan-600');
-            }
-        }
-    });
+function triggerQuickAction(msg) {
+    alert(`⚡ ACTION EXECUTED: ${msg}`);
 }
 
-// State Machine Button Handlers in First Responder View
-async function updateResponderStatus(newStatus) {
-    if (!activeIncident) return;
-
-    try {
-        const resp = await fetch(`/api/incident/${activeIncident.id}/status`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: newStatus })
-        });
-        const res = await resp.json();
-
-        // Update local object
-        activeIncident.status = newStatus;
-        allIncidents[activeIncident.id].status = newStatus;
-
-        // Re-render both views
-        updateLifecycleStepper(newStatus);
-        renderResponderView(activeIncident);
-
-        // If contained or resolved, update control room banner
-        if (newStatus === 'RESOLVED') {
-            document.getElementById('dispatchStatusText').innerHTML = 
-                `<strong class="text-emerald-400">MISSION RESOLVED:</strong> Ground crew verified fire extinguished. Verified ground truth stored in database.`;
-        }
-
-    } catch (e) {
-        console.error(e);
-    }
+// SOS Modal logic
+function openSosModal() {
+    document.getElementById('sos-form').classList.remove('hidden');
+    document.getElementById('sos-success').classList.add('hidden');
+    document.getElementById('sosModal').classList.remove('hidden');
+    lucide.createIcons();
 }
 
-// Export GeoJSON
-function exportGeoJson() {
-    if (!activeIncident) return;
-    const geojson = {
-        type: "FeatureCollection",
-        features: [
-            {
-                type: "Feature",
-                geometry: { type: "Point", coordinates: [activeIncident.coordinates.lon, activeIncident.coordinates.lat] },
-                properties: {
-                    incident_id: activeIncident.id,
-                    title: activeIncident.title,
-                    classification: activeIncident.classification,
-                    risk_score: activeIncident.risk_score,
-                    frp_mw: activeIncident.frp_mw,
-                    status: activeIncident.status
-                }
-            }
-        ]
-    };
-    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/geo+json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${activeIncident.id}_Dossier.geojson`;
-    a.click();
-    URL.revokeObjectURL(url);
+function closeSosModal() {
+    document.getElementById('sosModal').classList.add('hidden');
 }
 
-// Export Official PDF Incident Dossier
-function exportDossierPdf() {
-    if (!activeIncident) return;
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const inc = activeIncident;
-
-    // Header Banner
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, 210, 32, 'F');
-    doc.setTextColor(249, 115, 22);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text("AEROTHERMAL | INCIDENT DOSSIER", 14, 15);
-    doc.setFontSize(9);
-    doc.setTextColor(148, 163, 184);
-    doc.text(`Incident ID: ${inc.id} | Status: ${inc.status} | Generated: ${new Date().toUTCString()}`, 14, 23);
-
-    // Risk Banner
-    doc.setFillColor(239, 68, 68);
-    doc.roundedRect(14, 38, 182, 14, 2, 2, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
-    doc.text(`INCIDENT: ${inc.classification} (Risk Score: ${inc.risk_score}/100 - ${inc.risk_label})`, 20, 47);
-
-    // Metadata Table
-    doc.autoTable({
-        startY: 56,
-        head: [['Field', 'Operational Value']],
-        body: [
-            ['Incident Title', inc.title],
-            ['Coordinates', `${inc.coordinates.lat}°N, ${inc.coordinates.lon}°E`],
-            ['Fire Radiative Power', `${inc.frp_mw} MegaWatts`],
-            ['Brightness Temp', `${inc.brightness_c} °C`],
-            ['Assigned Authority', `${inc.assigned_authority.name} (${inc.assigned_authority.distance_km} km, ETA: ${inc.assigned_authority.eta_mins} mins)`],
-            ['Downwind Impact Corridor', inc.wind_corridor.description],
-            ['Historical Local Baseline', inc.local_baseline.anomaly_ratio]
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [30, 41, 59] },
-        styles: { fontSize: 8 }
+let selectedSosTypeStr = '';
+function selectSosType(btn, type) {
+    selectedSosTypeStr = type;
+    document.querySelectorAll('.sos-opt-btn').forEach(b => {
+        b.className = "sos-opt-btn p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-left font-semibold text-slate-700 dark:text-slate-200 hover:border-red-500 flex items-center gap-2";
     });
+    btn.className = "sos-opt-btn p-2.5 rounded-lg border-2 border-red-500 bg-red-50/50 dark:bg-red-950/40 text-left font-bold text-red-600 dark:text-red-400 flex items-center gap-2";
+}
 
-    // Assets at Risk Table
-    const assetRows = inc.assets_at_risk.map(a => [a.asset, `${a.distance_km} km`, a.population, a.risk_tier]);
-    doc.setFontSize(11);
-    doc.setTextColor(15, 23, 42);
-    doc.text("Assets-at-Risk & Population Exposure", 14, doc.lastAutoTable.finalY + 12);
+function submitSos() {
+    document.getElementById('sos-form').classList.add('hidden');
+    document.getElementById('sos-success').classList.remove('hidden');
+}
 
-    doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 16,
-        head: [['Asset', 'Distance', 'Exposure / Population', 'Risk Level']],
-        body: assetRows,
-        theme: 'grid',
-        headStyles: { fillColor: [249, 115, 22] },
-        styles: { fontSize: 8 }
-    });
+// Cross-Portal Simulation
+function triggerSatellitePass() {
+    const alertPill = document.getElementById('cmd-active-alert-pill');
+    alertPill.textContent = "4 Critical Incidents Active";
+    alertPill.className = "text-red-600 dark:text-red-400 font-bold animate-pulse";
 
-    doc.save(`${inc.id}_Incident_Dossier.pdf`);
+    document.getElementById('ntro-hotspots-count').textContent = "248";
+    document.getElementById('ntro-critical-count').textContent = "4";
+
+    alert("🛰️ NASA FIRMS Pass Completed:\nNew Thermal Anomaly Ingested: INC-2847 in Similipal Reserve (710°C).\nCommand Center alert counter updated!");
 }
