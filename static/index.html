@@ -156,7 +156,7 @@
                 <div class="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-5" id="ntro-details-panel">
                     <!-- Top Preview Banner -->
                     <div class="relative h-48 rounded-lg overflow-hidden bg-slate-900 flex items-end p-4 border border-slate-200 dark:border-slate-800">
-                        <div class="absolute inset-0 bg-cover bg-center opacity-85" style="background-image: url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80');"></div>
+                        <div id="ntro-preview-image" class="absolute inset-0 bg-cover bg-center opacity-85 transition-all duration-500" style="background-image: url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
                         
                         <div class="relative z-10 flex flex-wrap items-center justify-between w-full gap-2">
@@ -209,9 +209,9 @@
                             <span class="text-[10px] text-slate-400 uppercase font-mono block">Facility match</span>
                             <span class="text-slate-800 dark:text-slate-200 font-medium" id="ntro-detail-match">Dense Forest Reserve &bull; Odisha Industrial &amp; Forest Database</span>
                         </div>
-                        <div class="p-2.5 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-900/60 flex items-center justify-between text-blue-900 dark:text-blue-300">
-                            <span class="font-mono text-[11px]">Surface Wind: <strong>NE at 18 km/h</strong></span>
-                            <span class="font-mono text-[11px]">Downwind Corridor: <strong>2.8 km (toward NH-326)</strong></span>
+                        <div id="ntro-detail-wind" class="p-2.5 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-900/60 flex items-center justify-between text-blue-900 dark:text-blue-300 text-[11px] font-mono">
+                            <span>Surface Wind: <strong>NE at 18 km/h</strong></span>
+                            <span>Downwind Corridor: <strong>2.8 km (toward NH-326)</strong></span>
                         </div>
                     </div>
                 </div>

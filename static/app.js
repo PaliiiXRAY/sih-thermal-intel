@@ -11,7 +11,8 @@ const ntroIncidents = [
         confidence: 91, coords: '18.92°N • 82.10°E',
         temp: '623°C', area: '12.8 km²', source: 'VIIRS',
         facility: 'Dense Forest Reserve', matchText: 'Dense Forest Reserve • Odisha Forest & Protected Land Database',
-        wind: 'Surface Wind: NE at 18 km/h • Downwind Threat Corridor: 2.8 km (toward NH-326)'
+        wind: 'Surface Wind: NE at 18 km/h • Downwind Threat Corridor: 2.8 km (toward NH-326)',
+        image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80'
     },
     {
         id: 'INC-2845', time: '03:41 UTC', location: 'Mehsana, Gujarat',
@@ -19,7 +20,8 @@ const ntroIncidents = [
         confidence: 99, coords: '23.60°N • 72.40°E',
         temp: '412°C', area: '0.4 km²', source: 'VIIRS',
         facility: 'ONGC Extraction Unit 4', matchText: 'Licensed Gas Flare Facility • Gujarat Industrial Development Corp',
-        wind: 'Surface Wind: W at 9 km/h • Downwind Threat Corridor: 0.2 km (Enclosed Perimeter)'
+        wind: 'Surface Wind: W at 9 km/h • Downwind Threat Corridor: 0.2 km (Enclosed Perimeter)',
+        image: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1200&q=80'
     },
     {
         id: 'INC-2844', time: '02:18 UTC', location: 'Ropar, Punjab',
@@ -27,7 +29,8 @@ const ntroIncidents = [
         confidence: 88, coords: '30.97°N • 76.53°E',
         temp: '350°C', area: '3.2 km²', source: 'MODIS',
         facility: 'Agricultural Farmland Block B', matchText: 'Farmland Cluster • Punjab Remote Sensing Centre (PRSC)',
-        wind: 'Surface Wind: NW at 14 km/h • Downwind Threat Corridor: 1.5 km (Smoke plume over State Hwy)'
+        wind: 'Surface Wind: NW at 14 km/h • Downwind Threat Corridor: 1.5 km (Smoke plume over State Hwy)',
+        image: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80'
     },
     {
         id: 'INC-2843', time: '01:47 UTC', location: 'Faridabad, Haryana',
@@ -35,7 +38,8 @@ const ntroIncidents = [
         confidence: 84, coords: '28.41°N • 77.31°E',
         temp: '480°C', area: '0.8 km²', source: 'VIIRS',
         facility: 'Unauthorized Waste Dump', matchText: 'Municipal Buffer Zone • Haryana State Pollution Control Board',
-        wind: 'Surface Wind: E at 11 km/h • Downwind Threat Corridor: 0.9 km (toward Residential Sector 58)'
+        wind: 'Surface Wind: E at 11 km/h • Downwind Threat Corridor: 0.9 km (toward Residential Sector 58)',
+        image: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=1200&q=80'
     },
     {
         id: 'INC-2842', time: '01:12 UTC', location: 'Vadodara, Gujarat',
@@ -43,7 +47,8 @@ const ntroIncidents = [
         confidence: 93, coords: '22.31°N • 73.18°E',
         temp: '590°C', area: '4.5 km²', source: 'VIIRS',
         facility: 'Petrochemical Complex Gate 3', matchText: 'Petrochemical Refinement Facility • National Industrial Cadastre',
-        wind: 'Surface Wind: SW at 16 km/h • Downwind Threat Corridor: 2.1 km (Industrial Corridor)'
+        wind: 'Surface Wind: SW at 16 km/h • Downwind Threat Corridor: 2.1 km (Industrial Corridor)',
+        image: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ece?auto=format&fit=crop&w=1200&q=80'
     },
     {
         id: 'INC-2841', time: '00:29 UTC', location: 'Angul, Odisha',
@@ -51,7 +56,8 @@ const ntroIncidents = [
         confidence: 96, coords: '20.84°N • 85.10°E',
         temp: '710°C', area: '6.1 km²', source: 'VIIRS',
         facility: 'Thermal Power & Coal Storage', matchText: 'Thermal Plant Storage Yard • Odisha State Disaster Management',
-        wind: 'Surface Wind: NE at 20 km/h • Downwind Threat Corridor: 3.4 km (Crossing toward NH-55)'
+        wind: 'Surface Wind: NE at 20 km/h • Downwind Threat Corridor: 3.4 km (Crossing toward NH-55)',
+        image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80'
     }
 ];
 
@@ -293,16 +299,39 @@ function selectNtroIncident(id) {
 
     renderNtroIncidents();
 
+    // Dynamic Image update for each incident
+    const imgEl = document.getElementById('ntro-preview-image');
+    if (imgEl && inc.image) {
+        imgEl.style.backgroundImage = `url('${inc.image}')`;
+    }
+
     document.getElementById('ntro-facility-tag').textContent = inc.facility;
     document.getElementById('ntro-detail-title').textContent = inc.location;
-    document.getElementById('ntro-detail-coords').textContent = inc.coords;
-    document.getElementById('ntro-detail-severity').textContent = inc.severity;
+    document.getElementById('ntro-detail-coords').innerHTML = inc.coords;
+    
+    // Dynamic severity pill styling
+    const sevEl = document.getElementById('ntro-detail-severity');
+    sevEl.textContent = inc.severity;
+    const sevColors = {
+        'CRITICAL': 'bg-red-600 text-white',
+        'HIGH': 'bg-amber-500 text-slate-950',
+        'ALERT': 'bg-orange-500 text-white',
+        'MODERATE': 'bg-blue-600 text-white',
+        'ROUTINE': 'bg-emerald-600 text-white'
+    };
+    sevEl.className = `px-2.5 py-1 rounded text-xs font-bold font-mono uppercase ${sevColors[inc.severity] || 'bg-slate-500 text-white'}`;
+
     document.getElementById('ntro-detail-class').textContent = inc.label;
     document.getElementById('ntro-detail-confidence').textContent = `${inc.confidence}%`;
     document.getElementById('ntro-detail-temp').textContent = inc.temp;
     document.getElementById('ntro-detail-area').textContent = inc.area;
     document.getElementById('ntro-detail-source').textContent = inc.source;
     document.getElementById('ntro-detail-match').textContent = inc.matchText;
+
+    const windEl = document.getElementById('ntro-detail-wind');
+    if (windEl && inc.wind) {
+        windEl.innerHTML = `<span>${inc.wind.split(' • ')[0]}</span><span>${inc.wind.split(' • ')[1] || ''}</span>`;
+    }
 }
 
 function filterNtro(cat) {
