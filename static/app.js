@@ -7,10 +7,19 @@ let markersLayer = null;
 let activeIncident = null;
 let allIncidents = {};
 
+function logEvent(message) {
+    const log = document.getElementById('systemEventLog');
+    if (log) {
+        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        log.innerHTML = `<span class="text-slate-600">[${now}]</span> ${message}`;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
+    lucide.createIcons({ icons: lucide.icons });
     initMap();
     loadAllIncidents();
+    logEvent("AeroThermal Intelligence Core Online. Ready for telemetry ingestion.");
 });
 
 function initMap() {
@@ -40,7 +49,7 @@ function toggleMapLayer() {
         currentLayer = 'dark';
         btn.innerHTML = `<i data-lucide="layers" class="w-3.5 h-3.5"></i> Satellite View`;
     }
-    lucide.createIcons();
+    lucide.createIcons({ icons: lucide.icons });
 }
 
 // Switch between Control Room and First Responder View (The Winning Demo Loop!)
@@ -53,17 +62,19 @@ function switchView(viewName) {
     if (viewName === 'control') {
         viewCtrl.classList.remove('hidden');
         viewRsp.classList.add('hidden');
-        btnControl.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md";
-        btnResp.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200";
+        btnControl.className = "px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-sm";
+        btnResp.className = "px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200";
         setTimeout(() => map.invalidateSize(), 150);
+        logEvent("Perspective shifted to CONTROL ROOM command center.");
     } else {
         viewCtrl.classList.add('hidden');
         viewRsp.classList.remove('hidden');
-        btnResp.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md";
-        btnControl.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200";
+        btnResp.className = "px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-sm";
+        btnControl.className = "px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200";
         document.getElementById('responderPendingBadge').classList.add('hidden');
+        logEvent("Perspective shifted to FIELD TERMINAL units.");
     }
-    lucide.createIcons();
+    lucide.createIcons({ icons: lucide.icons });
 }
 
 async function loadAllIncidents() {
@@ -92,12 +103,21 @@ async function selectIncident(incidentId) {
 }
 
 function renderIncident(inc) {
+    logEvent(`Analyzing intelligence dossier: ${inc.id} - ${inc.title}`);
+
+    // Update Global KPIs
+    const activeKpi = document.getElementById('kpi-active');
+    const riskKpi = document.getElementById('kpi-risk');
+    if (activeKpi) activeKpi.textContent = Object.keys(allIncidents).length;
+    if (riskKpi) riskKpi.textContent = Object.values(allIncidents).filter(i => i.risk_score >= 75).length;
+
     // 1. Highlight Top Queue Cards
     document.querySelectorAll('.incident-card').forEach(card => {
-        card.classList.remove('ring-2', 'ring-cyan-400');
+        card.classList.remove('ring-2', 'ring-indigo-400');
     });
     const activeCard = document.getElementById(`card-${inc.id}`);
-    if (activeCard) activeCard.classList.add('ring-2', 'ring-cyan-400');
+    if (activeCard) activeCard.classList.add('ring-2', 'ring-indigo-400');
+
 
     // 2. Control Room Banner
     document.getElementById('incIdBadge').textContent = `#${inc.id}`;
@@ -183,7 +203,7 @@ function renderIncident(inc) {
     // 9. Synchronize First Responder View
     renderResponderView(inc);
 
-    lucide.createIcons();
+    lucide.createIcons({ icons: lucide.icons });
 }
 
 function updateLifecycleStepper(status) {
@@ -279,7 +299,7 @@ async function dispatchGroundAlert() {
     const btn = document.getElementById('btnDispatchAlert');
     btn.disabled = true;
     btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Sending Alert to Fire Station...`;
-    lucide.createIcons();
+    lucide.createIcons({ icons: lucide.icons });
 
     try {
         const resp = await fetch(`/api/incident/${activeIncident.id}/dispatch`, { method: 'POST' });
@@ -308,7 +328,7 @@ async function dispatchGroundAlert() {
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> ✅ Alert Sent to Fire Station!`;
-        lucide.createIcons();
+        lucide.createIcons({ icons: lucide.icons });
     }
 }
 

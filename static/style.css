@@ -1,33 +1,73 @@
-/* AeroThermal Custom Styling */
+/* AeroThermal Professional Design System */
 
-.leaflet-container {
-    background-color: #080c14 !important;
+:root {
+    --bg-main: #020617; /* slate-950 */
+    --bg-card: #0f172a; /* slate-900 */
+    --bg-input: #1e293b; /* slate-800 */
+    --border-color: #1e293b; /* slate-800 */
+    --text-primary: #f8fafc; /* slate-50 */
+    --text-secondary: #94a3b8; /* slate-400 */
+    --accent-primary: #4f46e5; /* indigo-600 */
+    --accent-danger: #dc2626; /* red-600 */
+    --accent-warning: #f59e0b; /* amber-500 */
+    --accent-success: #10b981; /* emerald-500 */
 }
 
-/* Pulsing thermal hotspot circle */
-@keyframes thermalPulse {
-    0% { transform: scale(0.95); opacity: 0.9; }
-    50% { transform: scale(1.15); opacity: 0.6; }
-    100% { transform: scale(0.95); opacity: 0.9; }
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+}
+
+/* Professional Leaflet Overrides */
+.leaflet-container {
+    background-color: var(--bg-main) !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+.leaflet-popup-content-wrapper {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+    padding: 0 !important;
+}
+
+.leaflet-popup-content {
+    margin: 12px !important;
+}
+
+.leaflet-popup-tip {
+    background: var(--bg-card) !important;
+}
+
+/* Professional Thermal Pulse - Softer and more "Intelligence" feel */
+@keyframes professionalPulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); transform: scale(0.95); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); transform: scale(1.05); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); transform: scale(0.95); }
 }
 
 .thermal-flare-icon {
-    animation: thermalPulse 2s infinite ease-in-out;
+    animation: professionalPulse 3s infinite ease-in-out;
 }
 
-/* Custom Leaflet Popup */
-.leaflet-popup-content-wrapper {
-    background: #0f172a !important;
-    color: #e2e8f0 !important;
-    border: 1px solid #334155 !important;
-    border-radius: 8px !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
-}
-.leaflet-popup-tip {
-    background: #0f172a !important;
+/* Custom Scrollbars for Enterprise look */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-main); }
+::-webkit-scrollbar-thumb { background: var(--bg-input); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+/* Transition utilities */
+.view-transition {
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #080c14; }
-::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #f97316; }
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
