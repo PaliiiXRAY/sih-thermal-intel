@@ -529,7 +529,7 @@ async function runPipelineScenario() {
             }).bindPopup(`
                 <div style="font-family:sans-serif;font-size:12px;min-width:220px">
                     <b style="color:${color}">${label}</b><br/>
-                    <span style="color:#555">${p.classification.confidence}% confidence &bull; FRP ${p.firms.frp} MW</span><br/>
+                    <span style="color:#555">${p.classification.confidence_percent}% confidence &bull; FRP ${p.firms.frp} MW</span><br/>
                     <b>Facility:</b> ${p.osm.facility_name || 'None mapped'}<br/>
                     <b>OSM tag:</b> ${p.osm.osm_tag} (${p.osm.distance_to_facility_m} m)<br/>
                     <b>Persistence:</b> ${p.persistence.persistence_score}% &bull; ${p.persistence.category}<br/>
@@ -553,7 +553,7 @@ async function runPipelineScenario() {
             <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs space-y-1">
                 <div class="flex items-center justify-between">
                     <span class="font-bold font-mono" style="color:${color}">${c.classification}</span>
-                    <span class="font-mono text-slate-400">${c.confidence}%</span>
+                    <span class="font-mono text-slate-400">${c.confidence_percent}%</span>
                 </div>
                 <div class="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                     ${p.firms.id} &bull; ${p.firms.lat.toFixed(3)}&deg;N ${p.firms.lon.toFixed(3)}&deg;E &bull; FRP ${p.firms.frp} MW &bull; ${p.firms.brightness_celsius}&deg;C
