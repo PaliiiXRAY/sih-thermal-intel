@@ -24,6 +24,8 @@
         }
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-orange-500 selection:text-white transition-colors duration-150">
@@ -136,6 +138,54 @@
                 <button onclick="filterNtro('gas-flare')" id="btn-ntro-gas-flare" class="px-3 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Gas Flare</button>
                 <button onclick="filterNtro('crop-burning')" id="btn-ntro-crop-burning" class="px-3 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Crop Burning</button>
                 <button onclick="filterNtro('illegal')" id="btn-ntro-illegal" class="px-3 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Illegal</button>
+            </div>
+
+            <!-- Live GIS Classification Pipeline (FIRMS -> OSM -> Persistence -> WorldCover -> AI) -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-4 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+                        <i data-lucide="radar" class="w-4 h-4 text-blue-500"></i>
+                        Live Classification Pipeline &mdash; GIS Overlay
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <select id="pipeline-scenario" class="px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs">
+                            <option value="jamnagar_refinery">🏭 Jamnagar Refinery Flare (Gujarat)</option>
+                            <option value="punjab_stubble">🌾 Sangrur Stubble Burning (Punjab)</option>
+                            <option value="similipal_wildfire">🌲 Similipal Wildfire (Odisha)</option>
+                            <option value="angul_thermal_plant">⚡ Angul Thermal Power Plant (Odisha)</option>
+                            <option value="clandestine_thermal_anomaly">⚠️ Clandestine Anomaly (Singrauli)</option>
+                        </select>
+                        <label class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium cursor-pointer">
+                            <input type="checkbox" id="pipeline-live-osm" class="rounded"> Live OSM (Overpass)
+                        </label>
+                        <button onclick="runPipelineScenario()" id="btn-pipeline-run" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-bold shadow-xs flex items-center gap-1.5">
+                            <i data-lucide="play" class="w-3.5 h-3.5"></i> Run AI Pipeline
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <div class="lg:col-span-7">
+                        <div id="pipeline-map" class="w-full h-[360px] rounded-lg border border-slate-200 dark:border-slate-700 z-0"></div>
+                        <div class="flex flex-wrap gap-3 mt-2 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block"></span>Gas Flare / Industrial</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>Power / Steel / Mining</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span>Wildfire / Clandestine</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>Crop Burning</span>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-5 space-y-2">
+                        <div class="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+                            <span>Classified Hotspots</span>
+                            <span class="font-mono text-slate-400" id="pipeline-result-count">0 results</span>
+                        </div>
+                        <div id="pipeline-results" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                            <div class="text-xs text-slate-400 dark:text-slate-500 py-8 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                                Select a scenario and run the pipeline to classify FIRMS hotspots.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Two-Column Layout -->

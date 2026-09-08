@@ -468,3 +468,117 @@ function triggerSatellitePass() {
 
     alert("🛰️ NASA FIRMS Pass Completed:\nNew Thermal Anomaly Ingested: INC-2847 in Similipal Reserve (710°C).\nCommand Center alert counter updated!");
 }
+
+// ===================== Live Classification Pipeline (GIS Overlay) =====================
+let pipelineMap = null;
+let pipelineLayer = null;
+let pipelineMarkers = [];
+
+const CLASS_COLORS = [
+    { match: /GAS FLARE/i, color: '#f97316' },
+    { match: /POWER|STEEL|MINING/i, color: '#fbbf24' },
+    { match: /WILDFIRE/i, color: '#dc2626' },
+    { match: /CLANDESTINE/i, color: '#991b1b' },
+    { match: /AGRICULTURAL/i, color: '#3b82f6' }
+];
+
+function classColor(label) {
+    const hit = CLASS_COLORS.find(c => c.match.test(label));
+    return hit ? hit.color : '#64748b';
+}
+
+function initPipelineMap() {
+    if (pipelineMap) return;
+    pipelineMap = L.map('pipeline-map', { scrollWheelZoom: true }).setView([22.3, 79.0], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(pipelineMap);
+    pipelineLayer = L.layerGroup().addTo(pipelineMap);
+}
+
+async function runPipelineScenario() {
+    initPipelineMap();
+    const scenarioId = document.getElementById('pipeline-scenario').value;
+    const liveOsm = document.getElementById('pipeline-live-osm').checked ? '1' : '0';
+    const btn = document.getElementById('btn-pipeline-run');
+    const resultsEl = document.getElementById('pipeline-results');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Running...';
+    lucide.createIcons();
+    resultsEl.innerHTML = '<div class="text-xs text-blue-500 font-mono py-8 text-center">Ingesting FIRMS detections &rarr; OSM context &rarr; persistence &rarr; WorldCover &rarr; classifying...</div>';
+
+    try {
+        const resp = await fetch(`/api/pipeline/scenario?id=${scenarioId}&live_osm=${liveOsm}`);
+        const fc = await resp.json();
+        if (fc.error) throw new Error(fc.error);
+
+        // Draw classified hotspots on the GIS overlay
+        pipelineLayer.clearLayers();
+        pipelineMarkers = [];
+        fc.features.forEach(f => {
+            const p = f.properties;
+            const lat = f.geometry.coordinates[1];
+            const lon = f.geometry.coordinates[0];
+            const label = p.classification.classification;
+            const color = classColor(label);
+            const marker = L.circleMarker([lat, lon], {
+                radius: 11, color: color, weight: 2.5,
+                fillColor: color, fillOpacity: 0.35
+            }).bindPopup(`
+                <div style="font-family:sans-serif;font-size:12px;min-width:220px">
+                    <b style="color:${color}">${label}</b><br/>
+                    <span style="color:#555">${p.classification.confidence}% confidence &bull; FRP ${p.firms.frp} MW</span><br/>
+                    <b>Facility:</b> ${p.osm.facility_name || 'None mapped'}<br/>
+                    <b>OSM tag:</b> ${p.osm.osm_tag} (${p.osm.distance_to_facility_m} m)<br/>
+                    <b>Persistence:</b> ${p.persistence.persistence_score}% &bull; ${p.persistence.category}<br/>
+                    <b>Land-cover:</b> ${p.landcover.worldcover_class}<br/>
+                    <i style="color:#555">${p.classification.rationale || ''}</i>
+                </div>
+            `).addTo(pipelineLayer);
+            pipelineMarkers.push(marker);
+        });
+        if (fc.features.length) {
+            pipelineMap.fitBounds(L.featureGroup(pipelineMarkers).getBounds().pad(0.5));
+        }
+
+        // Evidence dossier list
+        document.getElementById('pipeline-result-count').textContent = `${fc.features.length} hotspot${fc.features.length === 1 ? '' : 's'}`;
+        resultsEl.innerHTML = fc.features.map(f => {
+            const p = f.properties;
+            const c = p.classification;
+            const color = classColor(c.classification);
+            return `
+            <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold font-mono" style="color:${color}">${c.classification}</span>
+                    <span class="font-mono text-slate-400">${c.confidence}%</span>
+                </div>
+                <div class="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                    ${p.firms.id} &bull; ${p.firms.lat.toFixed(3)}&deg;N ${p.firms.lon.toFixed(3)}&deg;E &bull; FRP ${p.firms.frp} MW &bull; ${p.firms.brightness_celsius}&deg;C
+                </div>
+                <div class="text-[11px] text-slate-600 dark:text-slate-300">
+                    <b>Facility:</b> ${p.osm.facility_name || 'None mapped'} (${p.osm.osm_tag}, ${p.osm.distance_to_facility_m} m)
+                </div>
+                <div class="text-[11px] text-slate-600 dark:text-slate-300">
+                    <b>Persistence:</b> ${p.persistence.persistence_score}% (${p.persistence.category}) &bull; <b>Land-cover:</b> ${p.landcover.worldcover_class}
+                </div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 italic">${c.rationale || ''}</div>
+            </div>`;
+        }).join('');
+    } catch (err) {
+        resultsEl.innerHTML = `<div class="text-xs text-red-500 font-mono py-6 text-center border border-red-200 dark:border-red-900 rounded-lg">Pipeline error: ${err.message}<br/>Using the local server (python app.py) or the deployed API?</div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i> Run AI Pipeline';
+        lucide.createIcons();
+    }
+}
+
+// lazy-init the map when NTRO portal becomes visible
+const origSwitchPortal = switchPortal;
+switchPortal = function(portalName) {
+    origSwitchPortal(portalName);
+    if (portalName === 'ntro') setTimeout(initPipelineMap, 50);
+};
