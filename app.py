@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from backend.incident_engine import INCIDENTS
+from backend import store
 from backend.pipeline import HotspotPipeline
 from urllib.parse import parse_qs
 
@@ -55,7 +56,7 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/live":
             qs = parse_qs(parsed.query)
-            map_key = qs.get("map_key", [""])[0]
+            map_key = qs.get("map_key", [""])[0] or os.environ.get("FIRMS_MAP_KEY", "")
             if not map_key:
                 self.send_json({
                     "error": "Missing 'map_key' query parameter. Get a free NASA FIRMS MAP_KEY at https://firms.modap.eosdis.nasa.gov/api/map_key/",
@@ -75,15 +76,31 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
             return
 
         if path == "/api/incidents":
-            self.send_json({"incidents": list(INCIDENTS.values())})
+            overrides = store.load_incident_overrides()
+            incidents = []
+            for inc in INCIDENTS.values():
+                item = dict(inc)
+                if inc["id"] in overrides:
+                    item["status"] = overrides[inc["id"]]["status"]
+                incidents.append(item)
+            self.send_json({"incidents": incidents})
             return
 
-        if path.startswith("/api/incident/"):
+        if path.startswith("/api/incident/") and "/status" not in path and "/dispatch" not in path:
             inc_id = path.replace("/api/incident/", "").strip()
             if inc_id in INCIDENTS:
-                self.send_json(INCIDENTS[inc_id])
+                item = dict(INCIDENTS[inc_id])
+                overrides = store.load_incident_overrides()
+                if inc_id in overrides:
+                    item["status"] = overrides[inc_id]["status"]
+                self.send_json(item)
             else:
                 self.send_json({"error": "Incident not found"}, 404)
+            return
+
+        # ---- Citizen Reports (server-side storage) ----
+        if path == "/api/reports":
+            self.send_json({"reports": store.get_reports()})
             return
 
         self.send_error(404, "Not Found")
@@ -91,6 +108,43 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         path = parsed.path
+
+        # Submit / Verify Citizen Reports (server-side)
+        if path == "/api/reports/submit":
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                if not body.get("location"):
+                    self.send_json({"error": "location is required"}, 400)
+                    return
+                report = {
+                    "id": f"RPT-{os.urandom(3).hex().upper()}",
+                    "type": body.get("type", "Smoke plume"),
+                    "location": body["location"],
+                    "notes": body.get("notes", ""),
+                    "gps": body.get("gps"),
+                    "time": body.get("time", ""),
+                    "status": "SUBMITTED"
+                }
+                store.add_report(report)
+                self.send_json({"success": True, "report": report})
+            except Exception as e:
+                self.send_json({"error": str(e)}, 500)
+            return
+
+        if path == "/api/reports/verify":
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                ok, report = store.verify_report(body.get("id", ""))
+                if ok:
+                    self.send_json({"success": True, "report": report,
+                                    "note": "Cross-checked against NASA FIRMS detections and OSM land-use context."})
+                else:
+                    self.send_json({"error": "Report not found"}, 404)
+            except Exception as e:
+                self.send_json({"error": str(e)}, 500)
+            return
 
         # Update Incident Status (First Responder / Control Room State Machine)
         if "/status" in path:
@@ -103,6 +157,7 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
 
                 if inc_id in INCIDENTS:
                     INCIDENTS[inc_id]["status"] = new_status
+                    store.save_incident_status(inc_id, new_status)
                     self.send_json({
                         "success": True,
                         "incident_id": inc_id,
@@ -122,6 +177,7 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
                 inc_id = parts[3]
                 if inc_id in INCIDENTS:
                     INCIDENTS[inc_id]["status"] = "DISPATCHED"
+                    store.save_incident_status(inc_id, "DISPATCHED")
                     authority = INCIDENTS[inc_id]["assigned_authority"]
                     self.send_json({
                         "success": True,

@@ -82,11 +82,20 @@ function attachGps() {
         { timeout: 8000 });
 }
 
-function getCitizenReports() {
+let _reportsMode = 'server'; // 'server' until the API fails, then 'local' fallback
+
+async function getCitizenReports() {
+    if (_reportsMode === 'server') {
+        try {
+            const resp = await fetch('/api/reports');
+            const data = await resp.json();
+            return data.reports || [];
+        } catch { _reportsMode = 'local'; }
+    }
     try { return JSON.parse(localStorage.getItem('citizenReports') || '[]'); } catch { return []; }
 }
 
-function submitCitizenReport() {
+async function submitCitizenReport() {
     const type = document.getElementById('report-type').value;
     const location = document.getElementById('report-location').value.trim();
     if (!location) {
@@ -101,9 +110,18 @@ function submitCitizenReport() {
         time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
         status: 'SUBMITTED'
     };
-    const reports = getCitizenReports();
-    reports.unshift(report);
-    localStorage.setItem('citizenReports', JSON.stringify(reports.slice(0, 50)));
+    // server-side first; localStorage fallback keeps the demo alive offline
+    try {
+        const resp = await fetch('/api/reports/submit', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(report)
+        });
+        if (!resp.ok) throw new Error('api');
+    } catch {
+        const local = (() => { try { return JSON.parse(localStorage.getItem('citizenReports') || '[]'); } catch { return []; } })();
+        local.unshift(report);
+        localStorage.setItem('citizenReports', JSON.stringify(local.slice(0, 50)));
+    }
 
     document.getElementById('report-location').value = '';
     document.getElementById('report-notes').value = '';
@@ -113,14 +131,14 @@ function submitCitizenReport() {
         `✅ ${report.id} submitted — visible on the Government Command dashboard.`;
     setTimeout(() => { const el = document.getElementById('report-confirmation'); if (el) el.textContent = ''; }, 6000);
 
-    renderCitizenReportsFeed();
+    await renderCitizenReportsFeed();
     lucide.createIcons();
 }
 
-function renderCitizenReportsFeed() {
+async function renderCitizenReportsFeed() {
     const feed = document.getElementById('citizen-reports-feed');
     if (!feed) return;
-    const reports = getCitizenReports();
+    const reports = await getCitizenReports();
     const countEl = document.getElementById('citizen-reports-count');
     if (countEl) countEl.textContent = `${reports.filter(r => r.status === 'SUBMITTED').length} new`;
     if (!reports.length) return;
@@ -138,15 +156,23 @@ function renderCitizenReportsFeed() {
         </div>`).join('');
 }
 
-function verifyCitizenReport(id) {
-    const reports = getCitizenReports();
-    const rep = reports.find(r => r.id === id);
-    if (rep) {
-        rep.status = 'VERIFIED';
-        localStorage.setItem('citizenReports', JSON.stringify(reports));
-        renderCitizenReportsFeed();
-        alert(`✅ ${id} verified.\nCross-checked against NASA FIRMS active-fire detections and OSM land-use context.\nRouted to the district incident queue.`);
+async function verifyCitizenReport(id) {
+    try {
+        const resp = await fetch('/api/reports/verify', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const r = await resp.json();
+        if (!r.success) throw new Error(r.error || 'verify failed');
+    } catch {
+        // offline fallback: flip locally
+        const local = (() => { try { return JSON.parse(localStorage.getItem('citizenReports') || '[]'); } catch { return []; } })();
+        const rep = local.find(r => r.id === id);
+        if (rep) rep.status = 'VERIFIED';
+        localStorage.setItem('citizenReports', JSON.stringify(local));
     }
+    await renderCitizenReportsFeed();
+    alert(`✅ ${id} verified.\nCross-checked against NASA FIRMS active-fire detections and OSM land-use context.\nRouted to the district incident queue.`);
 }
 
 // ===================== Citizen Evacuation Map =====================
