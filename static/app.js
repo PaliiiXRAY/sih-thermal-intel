@@ -582,3 +582,4 @@ switchPortal = function(portalName) {
     origSwitchPortal(portalName);
     if (portalName === 'ntro') setTimeout(initPipelineMap, 50);
 };
+
