@@ -95,6 +95,10 @@ sih-thermal-intel/
 
 ---
 
+### Cross-Portal Disaster Workflow
+- **Government Command:** Incident Lifecycle Tracker drives the real backend state machine (NEW → INVESTIGATING → VERIFIED → DISPATCHED → CONTAINED → RESOLVED) with Dispatch/Advance buttons hitting `POST /api/incident/{id}/dispatch` and `/status`, plus a Citizen Reports Inbox.
+- **Citizen Services:** real Leaflet evacuation map (incident zone, safe shelter, NH-55 route) and a crowdsourced "Report Smoke or Fire" form (type, location, GPS) whose reports surface in the Command portal for FIRMS cross-checking.
+
 ## 🏆 Presentation Materials
 * **PowerPoint Presentation:** Double-click [`SIH_WINNING_TEMPLATE_AEROTHERMAL_SIH26162.pptx`](SIH_WINNING_TEMPLATE_AEROTHERMAL_SIH26162.pptx) to open in Microsoft PowerPoint or Google Slides.
 * **Stage Pitch Script:** Read [`presentation/DEMO_SCRIPT.md`](presentation/DEMO_SCRIPT.md) for word-for-word instructions on how to deliver the live demo.
