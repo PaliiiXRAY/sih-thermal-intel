@@ -8,3 +8,18 @@ __pycache__/
 
 ~$*
 data/
+
+~$*
+AeroThermal_SIH26162_v2.backup.pptx
+build_final_deck.py
+extract_all.py
+full_deck_shapes.txt
+inspect_deck.py
+slide2_text.txt
+slide_structure.json
+test_pptx.py
+desktop.ini
+final sih.pptx
+AeroThermal_SIH26162_Final_Pitch.pptx
+AeroThermal_SIH26162_v3_Final.pptx
+AeroThermal_SIH26162_v2.pptx.pptx
