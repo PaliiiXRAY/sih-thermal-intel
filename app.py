@@ -99,6 +99,14 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
             return
 
         # ---- Citizen Reports (server-side storage) ----
+        if path == "/api/stats":
+            try:
+                from backend.stats import compute_stats
+                self.send_json(compute_stats())
+            except Exception as e:
+                self.send_json({"error": str(e)}, 500)
+            return
+
         if path == "/api/reports":
             self.send_json({"reports": store.get_reports()})
             return

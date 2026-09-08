@@ -169,7 +169,36 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCmdZones();
     selectZone('angul');
     selectNtroIncident('INC-2846');
+    loadLiveStats();
 });
+
+// Real platform stats from the backend classification pipeline
+async function loadLiveStats() {
+    try {
+        const r = await fetch('/api/stats');
+        const s = await r.json();
+        if (s.error) return;
+        const el = (id) => document.getElementById(id);
+        if (el('ntro-hotspots-count')) el('ntro-hotspots-count').textContent = s.hotspots_analyzed;
+        const autoEl = el('ntro-auto-classified');
+        if (autoEl) autoEl.textContent = s.auto_classified;
+        const rateEl = el('ntro-classification-rate');
+        if (rateEl) rateEl.textContent = `${s.classification_rate}% classification rate`;
+        if (el('ntro-critical-count')) el('ntro-critical-count').textContent = s.critical_alerts;
+    } catch { /* stats are decorative fallback if offline */ }
+}
+
+// Export the last pipeline run as GeoJSON (PS deliverable: data output)
+let lastPipelineFC = null;
+function downloadGeoJSON() {
+    if (!lastPipelineFC) { alert('Run the AI Pipeline first, then export.'); return; }
+    const blob = new Blob([JSON.stringify(lastPipelineFC, null, 2)], { type: 'application/geo+json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'aerothermal_classified_hotspots.geojson';
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
 
 // Portal Switching
 function switchPortal(portalName) {
@@ -513,6 +542,7 @@ async function runPipelineScenario() {
         const resp = await fetch(`/api/pipeline/scenario?id=${scenarioId}&live_osm=${liveOsm}`);
         const fc = await resp.json();
         if (fc.error) throw new Error(fc.error);
+        lastPipelineFC = fc;
 
         // Draw classified hotspots on the GIS overlay
         pipelineLayer.clearLayers();
