@@ -492,8 +492,7 @@ function triggerSatellitePass() {
     alertPill.textContent = "4 Critical Incidents Active";
     alertPill.className = "text-red-600 dark:text-red-400 font-bold animate-pulse";
 
-    document.getElementById('ntro-hotspots-count').textContent = "248";
-    document.getElementById('ntro-critical-count').textContent = "4";
+    loadLiveStats();   // counters refresh from the real classification pipeline
 
     alert("🛰️ NASA FIRMS Pass Completed:\nNew Thermal Anomaly Ingested: INC-2847 in Similipal Reserve (710°C).\nCommand Center alert counter updated!");
 }
