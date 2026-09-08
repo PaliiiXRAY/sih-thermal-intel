@@ -123,4 +123,34 @@ SCENARIOS = {
             }
         ]
     }
+,
+    "angul_thermal_plant": {
+        "id": "angul_thermal_plant",
+        "title": "⚡ Angul Thermal Power Plant Coal Fire (Odisha)",
+        "category": "Registered Thermal Power Plant / Coal Storage",
+        "description": "Persistent thermal signature (52 of 60 passes) at a registered coal-fired thermal power station and its coal stockyard, with high FRP coal-handling fire risk downwind of residential blocks.",
+        "center": [20.8400, 85.1000],
+        "zoom": 12,
+        "region_name": "Angul Industrial Belt, Odisha",
+        "hotspots": [
+            {
+                "latitude": 20.8420, "longitude": 85.1020, "frp": 96.7, "brightness": 355.0,
+                "confidence": "high", "historical_passes": 52,
+                "osm_context": {
+                    "landuse": "industrial", "osm_tag": "industrial=power_station",
+                    "facility_name": "Angul Thermal Power Station", "facility_type": "power",
+                    "distance_m": 90, "elevation_m": 165
+                }
+            },
+            {
+                "latitude": 20.8390, "longitude": 85.0960, "frp": 61.3, "brightness": 348.6,
+                "confidence": "high", "historical_passes": 44,
+                "osm_context": {
+                    "landuse": "quarry", "osm_tag": "landuse=quarry",
+                    "facility_name": "Coal Stockyard & Handling Yard", "facility_type": "mining",
+                    "distance_m": 240, "elevation_m": 158
+                }
+            }
+        ]
+    }
 }

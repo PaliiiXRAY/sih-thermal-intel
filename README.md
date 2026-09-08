@@ -44,6 +44,27 @@ python app.py
 Open your browser and navigate to:  
 👉 **`http://localhost:5002`**
 
+### Live Hotspot Classification API (Problem Statement core deliverable)
+The full pipeline — **NASA FIRMS hotspot -> OSM facility/land-use context -> 60-day
+temporal persistence -> ESA WorldCover land-cover -> AI classification** — runs end-to-end:
+
+```
+# Demo mode: pipeline over pre-cached operational scenarios
+curl "http://localhost:5002/api/pipeline/scenario?id=jamnagar_refinery"
+#  (also: punjab_stubble | similipal_wildfire | angul_thermal_plant | clandestine_thermal_anomaly)
+#  add &live_osm=1 to resolve context LIVE via the OpenStreetMap Overpass API
+
+# Live mode: real FIRMS detections for a bounding box (free MAP_KEY from FIRMS)
+curl "http://localhost:5002/api/live?map_key=YOUR_FIRMS_KEY&bbox=6,68,36,98&source=viirs&days=1"
+```
+
+The response is a map-ready GeoJSON FeatureCollection where each hotspot carries its
+FIRMS metrics, OSM facility match, persistence score, WorldCover land-cover class and the
+final AI classification with evidence — exactly the classes named in SIH26162:
+Industrial Gas Flare, Thermal Power Plant / Coal-handling Fire, Steel / Smelter,
+Mining / Coal Stockyard, Agricultural Stubble Burning, Wildfire, and Unregistered
+Clandestine Anomaly.
+
 ---
 
 ## 📁 Repository Structure
@@ -52,6 +73,9 @@ sih-thermal-intel/
 ├── app.py                     # Core HTTP server exposing REST APIs & static assets (Port 5002)
 ├── backend/
 │   ├── firms_loader.py        # NASA FIRMS Active Fire data parser
+│   ├── firms_api.py           # LIVE NASA FIRMS API client (firms.modaps.eosdis.nasa.gov)
+│   ├── landcover.py           # ESA WorldCover land-cover class resolver
+│   ├── pipeline.py            # End-to-end hotspot pipeline: FIRMS -> OSM -> persistence -> classify
 │   ├── osm_correlator.py      # OpenStreetMap vector land-use correlator
 │   ├── persistence_engine.py  # 60-day satellite overpass recurrence calculator
 │   ├── classifier.py          # AI classification heuristics & agency routing

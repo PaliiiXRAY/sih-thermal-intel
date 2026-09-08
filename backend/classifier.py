@@ -20,9 +20,24 @@ class ThermalClassifier:
         # 1. Industrial Flare (Refinery / Gas Flare / Smelter)
         if (is_persistent and ("industrial" in landuse or "refinery" in facility or "power" in facility)) or \
            (persistence_score >= 50 and osm_data.get("distance_to_facility_m", 9999) < 800):
-            classification = "INDUSTRIAL GAS FLARE / PROCESS STACK"
+            # Distinguish registered heavy-industry sub-classes named in the PS
+            if "power" in facility or "power" in landuse:
+                classification = "THERMAL POWER PLANT / COAL-HANDLING FIRE"
+                severity = "HIGH (ENERGY INFRASTRUCTURE)"
+                action = "Notify plant control room & state power utility. Verify coal stockyard spontaneous combustion and OEM shutdown protocol."
+            elif "steel" in facility or "metall" in facility:
+                classification = "STEEL PLANT / SMELTER THERMAL SOURCE"
+                severity = "HIGH (MONITOR EMISSIONS)"
+                action = "Log facility emissions inventory. Cross-reference furnace operations with State Pollution Control Board."
+            elif "mining" in facility or "quarry" in landuse or "mining" in landuse:
+                classification = "MINING / COAL STOCKYARD THERMAL SOURCE"
+                severity = "HIGH (SPONTANEOUS COMBUSTION RISK)"
+                action = "Alert Indian Bureau of Mines & district mining officer. Watch for spontaneous coal-seam combustion spreading."
+            else:
+                classification = "INDUSTRIAL GAS FLARE / PROCESS STACK"
+                severity = "HIGH (MONITOR EMISSIONS)"
+                action = "Log facility emissions inventory. Cross-reference flare permit with Ministry of Environment (MoEFCC)."
             confidence = 94
-            severity = "HIGH (MONITOR EMISSIONS)"
             badge_color = "orange"
             action = "Log facility emissions inventory. Cross-reference flare permit with Ministry of Environment (MoEFCC)."
             rationale = f"Stationary thermal hotspot detected {persistence_data['observations_count']} times over {persistence_data['days_analyzed']} days inside verified OSM industrial boundary ({osm_data.get('facility_name', 'Industrial Zone')}). FRP: {frp} MW."

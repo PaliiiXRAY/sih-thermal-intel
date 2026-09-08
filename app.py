@@ -12,6 +12,8 @@ from urllib.parse import urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from backend.incident_engine import INCIDENTS
+from backend.pipeline import HotspotPipeline
+from urllib.parse import parse_qs
 
 PORT = 5002
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -39,6 +41,38 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
                         "text/html"
                 self.serve_file(file_path, ctype)
                 return
+
+        # --- Live Hotspot Classification Pipeline (Problem Statement deliverable) ---
+        if path == "/api/pipeline/scenario":
+            qs = parse_qs(parsed.query)
+            scenario_id = (qs.get("id", ["jamnagar_refinery"])[0])
+            use_live = qs.get("live_osm", ["0"])[0] == "1"
+            try:
+                self.send_json(HotspotPipeline.run_scenario(scenario_id, use_live_osm=use_live))
+            except Exception as e:
+                self.send_json({"error": str(e)}, 500)
+            return
+
+        if path == "/api/live":
+            qs = parse_qs(parsed.query)
+            map_key = qs.get("map_key", [""])[0]
+            if not map_key:
+                self.send_json({
+                    "error": "Missing 'map_key' query parameter. Get a free NASA FIRMS MAP_KEY at https://firms.modap.eosdis.nasa.gov/api/map_key/",
+                    "example": "/api/live?map_key=YOUR_KEY&bbox=6,68,36,98&source=viirs&days=1"
+                }, 400)
+                return
+            try:
+                bbox = tuple(float(x) for x in qs.get("bbox", ["6,68,36,98"])[0].split(","))
+                fc = HotspotPipeline.run_live(
+                    map_key, bbox,
+                    source=qs.get("source", ["viirs"])[0],
+                    day_range=int(qs.get("days", ["1"])[0]),
+                    use_live_osm=qs.get("live_osm", ["0"])[0] == "1")
+                self.send_json(fc)
+            except Exception as e:
+                self.send_json({"error": str(e)}, 502)
+            return
 
         if path == "/api/incidents":
             self.send_json({"incidents": list(INCIDENTS.values())})
