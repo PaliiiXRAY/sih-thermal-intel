@@ -364,6 +364,14 @@ const ROLE_PORTAL = { analyst: 'ntro', authority: 'command', responder: 'respond
 function initAuthGate() {
   const gate = document.getElementById('auth-gate');
   if (!gate) return;
+  const qp = new URLSearchParams(window.location.search).get('portal');
+  if (qp === 'citizen') {
+    sessionStorage.setItem('fs-auth', '1');
+    sessionStorage.setItem('fs-role', 'citizen');
+    gate.classList.add('hidden');
+    switchPortal('citizen');
+    return;
+  }
   if (sessionStorage.getItem('fs-auth') === '1') { gate.classList.add('hidden'); applyRoleSession(); return; }
   gate.classList.remove('hidden');
   const submit = document.getElementById('auth-submit');
@@ -396,9 +404,14 @@ function initAuthGate() {
 }
 
 function applyRoleSession() {
-  const role = sessionStorage.getItem('fs-role') || 'analyst';
-  const portal = ROLE_PORTAL[role] || 'ntro';
-  if (portal !== currentPortal) switchPortal(portal);
+  const qp = new URLSearchParams(window.location.search).get('portal');
+  if (qp && ['ntro', 'command', 'responder', 'citizen'].includes(qp)) {
+    if (qp !== currentPortal) switchPortal(qp);
+  } else {
+    const role = sessionStorage.getItem('fs-role') || 'analyst';
+    const portal = ROLE_PORTAL[role] || 'ntro';
+    if (portal !== currentPortal) switchPortal(portal);
+  }
   // operator chip in footer
   const label = document.getElementById('txt-footer-portal-label');
   if (label) {

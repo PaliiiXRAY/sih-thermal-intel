@@ -286,17 +286,18 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--fire);outline-offse
 @media(max-width:820px){.rs-body{flex-direction:column;align-items:flex-start}.rs-side{text-align:left}}
 
 /* PORTALS */
-.portal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.portal{border:1px solid var(--line);border-radius:20px;padding:46px 38px;background:var(--bg-2);transition:all .45s var(--ease);display:flex;flex-direction:column;min-height:340px}
+.portal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.portal{border:1px solid var(--line);border-radius:20px;padding:36px 28px;background:var(--bg-2);transition:all .45s var(--ease);display:flex;flex-direction:column;min-height:320px}
 .portal:hover{border-color:var(--hover-line);transform:translateY(-4px);background:var(--card-hover)}
 .portal .pk{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--gray-2)}
-.portal h3{font-size:30px;font-weight:650;letter-spacing:-.02em;margin-top:60px}
-.portal .pv{color:var(--fire);font-size:19px;font-weight:600;margin-top:6px}
-.portal p{color:var(--gray);font-size:14.5px;line-height:1.65;margin-top:16px;flex:1}
-.portal .link-arrow{margin-top:30px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.portal h3{font-size:26px;font-weight:650;letter-spacing:-.02em;margin-top:40px}
+.portal .pv{color:var(--fire);font-size:17px;font-weight:600;margin-top:6px}
+.portal p{color:var(--gray);font-size:13.5px;line-height:1.6;margin-top:14px;flex:1}
+.portal .link-arrow{margin-top:24px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
 .portal.intel:hover{border-color:rgba(126,200,242,.4)}
 .portal.intel .pv{color:var(--ice)}
-@media(max-width:900px){.portal-grid{grid-template-columns:1fr}.portal{min-height:0}.portal h3{margin-top:28px}}
+@media(max-width:1100px){.portal-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.portal-grid{grid-template-columns:1fr}.portal{min-height:0}.portal h3{margin-top:24px}}
 
 /* TECH pipeline */
 .tech-flow{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;border:1px solid var(--line);border-radius:20px;padding:50px 40px;background:var(--bg-2)}
@@ -536,28 +537,35 @@ footer{border-top:1px solid var(--line);background:var(--bg-2)}
   <div class="container">
     <div class="section-head reveal">
       <div class="kicker"><span class="idx">PLATFORM</span></div>
-      <h2>Three experiences.<br>One mission.</h2>
+      <h2>Four experiences.<br>One mission.</h2>
     </div>
     <div class="portal-grid">
-      <a class="portal intel reveal" href="/app">
+      <a class="portal intel reveal" href="/app?portal=ntro">
         <div class="pk">01</div>
         <h3>Intelligence</h3>
         <div class="pv">Understand.</div>
-        <p>Investigate thermal detections with full evidence dossiers — facility context, persistence history and land-cover, on a live map.</p>
+        <p>Investigate thermal detections with full evidence dossiers — facility context, persistence history and land-cover, on a live GIS map.</p>
         <span class="link-arrow">EXPLORE <span class="arrow">→</span></span>
       </a>
-      <a class="portal reveal" href="/app">
+      <a class="portal reveal" href="/app?portal=command">
         <div class="pk">02</div>
         <h3>Command</h3>
         <div class="pv">Coordinate.</div>
         <p>Prioritize incidents by risk score, dispatch the right agency, and track every case from alert to resolution.</p>
         <span class="link-arrow">EXPLORE <span class="arrow">→</span></span>
       </a>
-      <a class="portal reveal" href="/app">
+      <a class="portal reveal" href="/app?portal=responder">
         <div class="pk">03</div>
-        <h3>Response</h3>
+        <h3>Responder</h3>
         <div class="pv">Act.</div>
-        <p>Citizens report smoke with GPS, see evacuation routes, and reach shelter — even on zero data, via SMS fallback.</p>
+        <p>Field terminal for ground units: assigned mission, site coordinates, access route, and sequential status progression.</p>
+        <span class="link-arrow">EXPLORE <span class="arrow">→</span></span>
+      </a>
+      <a class="portal reveal" href="/app?portal=citizen">
+        <div class="pk">04</div>
+        <h3>Citizen</h3>
+        <div class="pv">Protect.</div>
+        <p>Verified public alerts, safe evacuation routes, nearest shelters, multilingual guidance, and SOS assistance.</p>
         <span class="link-arrow">EXPLORE <span class="arrow">→</span></span>
       </a>
     </div>
@@ -598,15 +606,15 @@ footer{border-top:1px solid var(--line);background:var(--bg-2)}
     </div>
     <div class="f-col">
       <div class="h">INTELLIGENCE</div>
-      <a href="/app">NTRO Intelligence</a>
-      <a href="/app">Incident Analysis</a>
-      <a href="/app">Detection Feed</a>
+      <a href="/app?portal=ntro">NTRO Intelligence</a>
+      <a href="/app?portal=ntro">Incident Analysis</a>
+      <a href="/app?portal=ntro">Detection Feed</a>
     </div>
     <div class="f-col">
       <div class="h">RESPONSE</div>
-      <a href="/app">Government Command</a>
-      <a href="/app">Responder Operations</a>
-      <a href="/app">Citizen Services</a>
+      <a href="/app?portal=command">Government Command</a>
+      <a href="/app?portal=responder">Responder Operations</a>
+      <a href="/app?portal=citizen">Citizen Services</a>
     </div>
     <div class="f-col">
       <div class="h">PLATFORM</div>

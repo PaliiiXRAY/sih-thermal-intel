@@ -6,7 +6,7 @@ Supports Control Room & First Responder Dashboards with State Machine.
 import os
 import sys
 import json
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -225,7 +225,7 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
 
 
 def run():
-    httpd = HTTPServer(("", PORT), AeroThermalHandler)
+    httpd = ThreadingHTTPServer(("", PORT), AeroThermalHandler)
     print(f"\n=======================================================")
     print(f" [*] AeroThermal Incident & Responder Platform Online!")
     print(f" [*] SIH26162 NTRO Satellite-to-Ground Disaster Response")

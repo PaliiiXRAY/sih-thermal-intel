@@ -27,7 +27,7 @@ def run_tests():
         print("[INIT] Backend server already running on port 5002.")
     except Exception:
         print("[INIT] Starting app.py on port 5002...")
-        server_process = subprocess.Popen([sys.executable, "app.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        server_process = subprocess.Popen([sys.executable, "app.py"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(2)
 
     passed = 0
@@ -35,14 +35,16 @@ def run_tests():
 
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path=EDGE_PATH, headless=True)
+        context = browser.new_context(viewport={"width": 1280, "height": 800})
+        context.add_init_script("sessionStorage.setItem('fs-auth', '1'); sessionStorage.setItem('fs-role', 'admin');")
 
         # ----------------------------------------------------
         # TEST 1: Deep Linking & Portal Isolation
         # ----------------------------------------------------
         for portal in ['command', 'citizen', 'responder', 'ntro']:
-            page = browser.new_page(viewport={"width": 1280, "height": 800})
-            page.goto(f"{BASE_URL}/app?portal={portal}", wait_until="networkidle")
-            page.wait_for_timeout(300)
+            page = context.new_page()
+            page.goto(f"{BASE_URL}/app?portal={portal}", wait_until="domcontentloaded")
+            page.wait_for_timeout(600)
 
             # Check portal visibility
             is_active = page.locator(f"#portal-{portal}").is_visible()
@@ -72,9 +74,9 @@ def run_tests():
         # ----------------------------------------------------
         # TEST 2: Responder Operations State Machine
         # ----------------------------------------------------
-        page = browser.new_page(viewport={"width": 1280, "height": 800})
-        page.goto(f"{BASE_URL}/app?portal=responder", wait_until="networkidle")
-        page.wait_for_timeout(300)
+        page = context.new_page()
+        page.goto(f"{BASE_URL}/app?portal=responder", wait_until="domcontentloaded")
+        page.wait_for_timeout(600)
 
         # Check responder elements
         assert page.locator("#resp-title").is_visible(), "Responder mission title visible"
@@ -99,13 +101,14 @@ def run_tests():
         print("\n[CAPTURING SCREENSHOTS FOR VISUAL PROOF]")
         for theme in ['light', 'dark']:
             for portal in ['ntro', 'command', 'responder', 'citizen']:
-                page = browser.new_page(viewport={"width": 1280, "height": 880})
-                page.goto(f"{BASE_URL}/app?portal={portal}", wait_until="networkidle")
-                page.wait_for_timeout(200)
+                page = context.new_page()
+                page.set_viewport_size({"width": 1280, "height": 880})
+                page.goto(f"{BASE_URL}/app?portal={portal}", wait_until="domcontentloaded")
+                page.wait_for_timeout(400)
 
                 # Set theme
                 page.evaluate(f"setTheme('{theme}')")
-                page.wait_for_timeout(200)
+                page.wait_for_timeout(300)
 
                 filename = f"verify_{portal}_{theme}.png"
                 page.screenshot(path=filename, full_page=False)
@@ -114,11 +117,12 @@ def run_tests():
 
         # Mobile Viewport for Responder & Citizen
         for portal in ['responder', 'citizen']:
-            page = browser.new_page(viewport={"width": 390, "height": 844})
-            page.goto(f"{BASE_URL}/app?portal={portal}", wait_until="networkidle")
-            page.wait_for_timeout(200)
+            page = context.new_page()
+            page.set_viewport_size({"width": 390, "height": 844})
+            page.goto(f"{BASE_URL}/app?portal={portal}", wait_until="domcontentloaded")
+            page.wait_for_timeout(400)
             page.evaluate("setTheme('light')")
-            page.wait_for_timeout(200)
+            page.wait_for_timeout(300)
             filename = f"verify_mobile_{portal}_light.png"
             page.screenshot(path=filename, full_page=False)
             print(f"  [SAVED] {filename}")
