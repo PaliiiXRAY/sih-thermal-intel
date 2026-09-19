@@ -272,6 +272,62 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
                 self.send_json({"error": "Incident not found"}, 404)
             return
 
+        if path == "/auth/me":
+            auth_header = self.headers.get("Authorization", "")
+            role = "analyst"
+            for r in ["admin", "authority", "responder", "analyst"]:
+                if r in auth_header.lower():
+                    role = r
+                    break
+            user_map = {
+                "admin": {"id": "USR-000", "full_name": "System Administrator", "email": "admin@firesense.org", "role": "admin", "is_active": True},
+                "authority": {"id": "USR-002", "full_name": "Command Authority", "email": "authority@firesense.org", "role": "authority", "is_active": True},
+                "responder": {"id": "USR-003", "full_name": "NDRF Field Responder", "email": "responder@firesense.org", "role": "responder", "is_active": True},
+                "analyst": {"id": "USR-001", "full_name": "NTRO Satellite Analyst", "email": "analyst@firesense.org", "role": "analyst", "is_active": True},
+            }
+            self.send_json(user_map.get(role, user_map["analyst"]))
+            return
+
+        if path.startswith("/api/incidents/") and path.endswith("/timeline"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            log = store.get_status_log(inc_id) if inc_id else []
+            timeline_events = []
+            for entry in log:
+                timeline_events.append({
+                    "timestamp": entry.get("timestamp", datetime.now(timezone.utc).isoformat()),
+                    "status": entry.get("status", "NEW"),
+                    "actor": entry.get("changed_by", "SYSTEM"),
+                    "note": entry.get("note", "")
+                })
+            self.send_json({"incident_id": inc_id, "events": timeline_events})
+            return
+
+        if path.startswith("/api/incidents/") and path.endswith("/context"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            responders = MOCK_RESPONDERS.get(inc_id, [])
+            self.send_json({
+                "incident_id": inc_id,
+                "nearest_assets": [
+                    {"name": "Substation Angul-4", "distance_km": 4.2},
+                    {"name": "Mahanadi Pipeline Junction", "distance_km": 7.8}
+                ],
+                "nearest_responders": responders
+            })
+            return
+
+        if path.startswith("/api/incidents/") and path.endswith("/risk"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            self.send_json({
+                "incident_id": inc_id,
+                "score": 0.88,
+                "population_density": "High (398K affected)",
+                "flammable_materials": "Petrochemical storage nearby"
+            })
+            return
+
         self.send_error(404, "Not Found")
 
     def do_POST(self):
@@ -279,6 +335,32 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
         path = parsed.path
         length = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+
+        # ── POST /auth/login ──
+        if path == "/auth/login":
+            email = body.get("email", "analyst@firesense.org")
+            role = "analyst"
+            if "admin" in email:
+                role = "admin"
+            elif "authority" in email:
+                role = "authority"
+            elif "responder" in email:
+                role = "responder"
+            
+            user_map = {
+                "admin": {"id": "USR-000", "full_name": "System Administrator", "email": "admin@firesense.org", "role": "admin", "is_active": True},
+                "authority": {"id": "USR-002", "full_name": "Command Authority", "email": "authority@firesense.org", "role": "authority", "is_active": True},
+                "responder": {"id": "USR-003", "full_name": "NDRF Field Responder", "email": "responder@firesense.org", "role": "responder", "is_active": True},
+                "analyst": {"id": "USR-001", "full_name": "NTRO Satellite Analyst", "email": "analyst@firesense.org", "role": "analyst", "is_active": True},
+            }
+            u = user_map.get(role, user_map["analyst"])
+            self.send_json({
+                "access_token": f"demo_token_{role}",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "user": u
+            })
+            return
 
         # ── POST /api/incidents/:id/alert ──
         if path.startswith("/api/incidents/") and path.endswith("/alert"):

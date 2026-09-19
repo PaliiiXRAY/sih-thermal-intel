@@ -762,6 +762,16 @@ async function updateResponderDetailPanel(id) {
 function switchPortal(portalName) {
     currentPortal = portalName;
     const portals = ['ntro', 'command', 'responder', 'citizen'];
+    const role = (typeof Auth !== 'undefined' && Auth.role) ? Auth.role : 'analyst';
+    const roleTabs = {
+        admin: ['ntro', 'command', 'responder', 'citizen'],
+        analyst: ['ntro'],
+        authority: ['command'],
+        responder: ['responder'],
+        citizen: ['citizen']
+    };
+    const allowed = roleTabs[role] || ['ntro', 'command', 'responder', 'citizen'];
+
     portals.forEach(p => {
         const el = document.getElementById(`portal-${p}`);
         const tab = document.getElementById(`tab-${p}`);
@@ -772,6 +782,11 @@ function switchPortal(portalName) {
         } else {
             el.classList.add('hidden');
             tab.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-semibold";
+        }
+        if (!allowed.includes(p)) {
+            tab.classList.add('hidden');
+        } else {
+            tab.classList.remove('hidden');
         }
     });
 
