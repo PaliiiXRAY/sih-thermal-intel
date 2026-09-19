@@ -1,7 +1,8 @@
 // FireSense Client Application - SIH26162
 // Enterprise Geospatial Thermal Anomaly Intelligence & Disaster Response
 
-let currentPortal = 'command';
+const _qp = new URLSearchParams(window.location.search).get('portal');
+let currentPortal = ['ntro', 'command', 'responder', 'citizen'].includes(_qp) ? _qp : 'command';
 let currentNtroFilter = 'all';
 let currentLanguage = 'en';
 let selectedIncidentId = null;
@@ -16,6 +17,11 @@ const Auth = {
     role: sessionStorage.getItem('firesense_role') || 'analyst',
 
     async init() {
+        const qp = new URLSearchParams(window.location.search).get('portal');
+        if (qp === 'citizen') {
+            await this.switchRole('citizen', false);
+            return;
+        }
         if (this.token) {
             try {
                 const me = await this.getMe();
@@ -28,8 +34,9 @@ const Auth = {
                 sessionStorage.removeItem('firesense_jwt');
             }
         }
-        // Auto-authenticate as default demo analyst if clean session
-        await this.switchRole('analyst', false);
+        const qpRoleMap = { ntro: 'analyst', command: 'authority', responder: 'responder', citizen: 'citizen' };
+        const initialRole = (qp && qpRoleMap[qp]) ? qpRoleMap[qp] : (sessionStorage.getItem('firesense_role') || 'analyst');
+        await this.switchRole(initialRole, false);
     },
 
     async login(email, password) {
@@ -107,6 +114,39 @@ const Auth = {
         if (select && select.value !== this.role) {
             select.value = this.role;
         }
+
+        // Role-based encapsulation of top navigation:
+        // Admin: all dashboards accessible
+        // Analyst: only NTRO
+        // Authority: only Government Command
+        // Responder: only Responder Operations
+        // Citizen: only Citizen Services
+        const role = this.role || 'analyst';
+        const roleTabs = {
+            admin: ['ntro', 'command', 'responder', 'citizen'],
+            analyst: ['ntro'],
+            authority: ['command'],
+            responder: ['responder'],
+            citizen: ['citizen']
+        };
+        const allowed = roleTabs[role] || ['ntro', 'command', 'responder', 'citizen'];
+
+        ['ntro', 'command', 'responder', 'citizen'].forEach(p => {
+            const tab = document.getElementById(`tab-${p}`);
+            if (tab) {
+                if (allowed.includes(p)) {
+                    tab.classList.remove('hidden');
+                } else {
+                    tab.classList.add('hidden');
+                }
+            }
+        });
+
+        // If current portal is not allowed for this role, auto-switch to authorized dashboard
+        if (!allowed.includes(currentPortal)) {
+            const target = allowed[0];
+            if (target) switchPortal(target);
+        }
     }
 };
 
@@ -128,17 +168,17 @@ async function apiFetch(url, options = {}) {
             const errCode = data.error?.code || `HTTP_${resp.status}`;
             const errMsg = data.error?.message || data.detail || 'API request rejected';
             throw new Error(`[${errCode}] ${errMsg}`);
-document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
-    // deep link: /app?portal=citizen|command|ntro|responder (from landing page CTAs)
-    const qp = new URLSearchParams(location.search).get('portal');
-    if (['ntro', 'command', 'responder', 'citizen'].includes(qp)) switchPortal(qp);
-    renderNtroIncidents();
-    renderCmdZones();
-    selectZone('angul');
-    selectNtroIncident('INC-2846');
-    loadLiveStats();
-});
+        }
+        return data;
+    } catch (err) {
+        if (err.message && err.message.includes('Failed to fetch')) {
+            showToast('Backend server connection refused on port 8000', 'error');
+        }
+        throw err;
+    }
+}
+
+
 
 // Real platform stats from the backend classification pipeline
 async function loadLiveStats() {
@@ -166,30 +206,6 @@ function downloadGeoJSON() {
     a.download = 'aerothermal_classified_hotspots.geojson';
     a.click();
     URL.revokeObjectURL(a.href);
-}
-
-// Portal Switching
-function switchPortal(portalName) {
-    currentPortal = portalName;
-    const portals = ['ntro', 'command', 'responder', 'citizen'];
-    portals.forEach(p => {
-        const el = document.getElementById(`portal-${p}`);
-        const tab = document.getElementById(`tab-${p}`);
-        if (!el || !tab) return;
-        if (p === portalName) {
-            el.classList.remove('hidden');
-            tab.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200/80 dark:border-slate-700 transition-all font-bold";
-        } else {
-            el.classList.add('hidden');
-            tab.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-semibold";
-        }
-        return data;
-    } catch (err) {
-        if (err.message.includes('Failed to fetch')) {
-            showToast('Backend server connection refused on port 8000', 'error');
-        }
-        throw err;
-    }
 }
 
 // Toast notification system
@@ -899,7 +915,6 @@ function submitSos() {
 let pipelineMap = null;
 let pipelineLayer = null;
 let pipelineMarkers = [];
-let lastPipelineFC = null;
 
 function initPipelineMap() {
     if (pipelineMap) return;
@@ -1024,7 +1039,13 @@ function downloadGeoJSON() {
 
 // App Initialization
 document.addEventListener('DOMContentLoaded', async () => {
+    if (window.lucide) lucide.createIcons();
+    const qp = new URLSearchParams(window.location.search).get('portal');
+    if (['ntro', 'command', 'responder', 'citizen'].includes(qp)) {
+        currentPortal = qp;
+    }
     await Auth.init();
     await loadIncidents();
     switchPortal(currentPortal);
+    loadLiveStats();
 });

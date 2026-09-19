@@ -17,6 +17,8 @@ def load_all_scenarios() -> dict:
     global _loaded_scenarios
     if _loaded_scenarios:
         return _loaded_scenarios
+    if not os.path.isdir(DEMO_DIR):
+        return _loaded_scenarios
 
     for fname in sorted(os.listdir(DEMO_DIR)):
         if not fname.endswith(".json"):

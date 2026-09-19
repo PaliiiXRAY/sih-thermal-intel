@@ -381,6 +381,9 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
                     })
                 else:
                     self.send_json({"error": "Incident not found"}, 404)
+            except Exception as e:
+                self.send_json({"error": str(e)}, 500)
+            return
         # --- New operational routes ---
         if path.startswith("/api/incident/") and path.endswith("/alert"):
             parts = path.split("/")

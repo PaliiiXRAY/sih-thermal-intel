@@ -553,67 +553,6 @@ function closeIncDrawer() {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeIncDrawer(); });
 
-// ===================== Auth Gate (demo, session-only) =====================
-const ROLE_PORTAL = { analyst: 'ntro', authority: 'command', responder: 'responder', admin: 'command' };
-
-function initAuthGate() {
-  const gate = document.getElementById('auth-gate');
-  if (!gate) return;
-  const qp = new URLSearchParams(window.location.search).get('portal');
-  if (qp === 'citizen') {
-    sessionStorage.setItem('fs-auth', '1');
-    sessionStorage.setItem('fs-role', 'citizen');
-    gate.classList.add('hidden');
-    switchPortal('citizen');
-    return;
-  }
-  if (sessionStorage.getItem('fs-auth') === '1') { gate.classList.add('hidden'); applyRoleSession(); return; }
-  gate.classList.remove('hidden');
-  const submit = document.getElementById('auth-submit');
-  const go = () => {
-    const op = document.getElementById('auth-operator').value.trim();
-    const key = document.getElementById('auth-key').value.trim();
-    const err = document.getElementById('auth-error');
-    if (!op || !key) {
-      err.textContent = 'Enter an operator ID and authentication key to continue.';
-      err.classList.remove('hidden');
-      return;
-    }
-    err.classList.add('hidden');
-    const role = document.getElementById('auth-role').value;
-    sessionStorage.setItem('fs-auth', '1');
-    sessionStorage.setItem('fs-role', role);
-    sessionStorage.setItem('fs-operator', op);
-    gate.classList.add('hidden');
-    applyRoleSession();
-  };
-  submit.addEventListener('click', go);
-  document.getElementById('auth-key').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
-  document.getElementById('auth-operator').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
-  document.getElementById('auth-citizen').addEventListener('click', () => {
-    sessionStorage.setItem('fs-auth', '1');
-    sessionStorage.setItem('fs-role', 'citizen');
-    gate.classList.add('hidden');
-    switchPortal('citizen');
-  });
-}
-
-function applyRoleSession() {
-  const qp = new URLSearchParams(window.location.search).get('portal');
-  if (qp && ['ntro', 'command', 'responder', 'citizen'].includes(qp)) {
-    if (qp !== currentPortal) switchPortal(qp);
-  } else {
-    const role = sessionStorage.getItem('fs-role') || 'analyst';
-    const portal = ROLE_PORTAL[role] || 'ntro';
-    if (portal !== currentPortal) switchPortal(portal);
-  }
-  // operator chip in footer
-  const label = document.getElementById('txt-footer-portal-label');
-  if (label) {
-    const op = sessionStorage.getItem('fs-operator') || 'demo';
-    label.textContent = (label.textContent + ' · ' + op).replace('Demo build', 'Demo environment');
-  }
-}
 
 
 // ---------- Detection Feed (demo playback from real pipeline scenarios) ----------
@@ -892,4 +831,4 @@ function submitResponderSitrep() {
   }
 }
 
-initAuthGate();
+

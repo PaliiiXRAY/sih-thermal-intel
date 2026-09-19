@@ -95,6 +95,45 @@ html:not(.dark) tr:hover {
     animation: livePulse 2s infinite ease-in-out;
 }
 
+/* NTRO: decision-first workspace. Evidence is deliberately behind a selection. */
+.ntro-heading h2 {
+    letter-spacing: -0.025em;
+}
+
+.ntro-workspace {
+    min-height: 0;
+}
+
+.ntro-dossier {
+    margin-bottom: 2rem;
+}
+
+.ntro-secondary-tools summary::-webkit-details-marker {
+    display: none;
+}
+
+.ntro-secondary-tools summary::after {
+    content: '+';
+    float: right;
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 0.75rem;
+}
+
+.ntro-secondary-tools[open] summary::after {
+    content: '–';
+}
+
+@media (max-width: 640px) {
+    #portal-ntro #pipeline-map {
+        height: 300px;
+    }
+
+    #portal-ntro .ntro-workspace > div:first-child > div:last-child {
+        width: 100%;
+    }
+}
+
 /* Modal overlay */
 .modal-backdrop {
     background: rgba(15, 23, 42, 0.6);

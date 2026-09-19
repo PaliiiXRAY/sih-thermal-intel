@@ -36,7 +36,6 @@ def run_tests():
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path=EDGE_PATH, headless=True)
         context = browser.new_context(viewport={"width": 1280, "height": 800})
-        context.add_init_script("sessionStorage.setItem('fs-auth', '1'); sessionStorage.setItem('fs-role', 'admin');")
 
         # ----------------------------------------------------
         # TEST 1: Deep Linking & Portal Isolation
