@@ -30,9 +30,16 @@
 <style>
 /* FireSense light-theme depth system: page < card < inner surface */
 html:not(.dark) body{background-color:#F3F5F7}
+html:not(.dark) #portal-ntro{--fs-accent:#E94B16}
+html:not(.dark) #portal-ntro .border-slate-100{border-color:#EEF3F7}
+html:not(.dark) #portal-ntro .bg-slate-100\/50, html:not(.dark) #portal-ntro .bg-slate-100{background-color:#EEF3F7}
 html:not(.dark) .bg-slate-50{background-color:#F7F9FB}
 html:not(.dark) .bg-white{box-shadow:0 1px 2px rgba(24,33,43,.04),0 1px 3px rgba(24,33,43,.03)}
-html:not(.dark) .border-slate-200{border-color:#E4EAEF}
+body, .font-sans{font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,sans-serif}
+h1,h2,h3,h4{font-family:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:-0.01em}
+.font-mono{font-family:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,monospace;font-size:.95em;letter-spacing:.01em}
+#portal-ntro .uppercase{letter-spacing:.06em}
+html:not(.dark) .border-slate-200{border-color:#D5DCE2}
 html:not(.dark) .ntro-banner-img{filter:brightness(2.35) saturate(.42) contrast(.88)}
 html:not(.dark) .text-slate-300{color:#2F3841}
 html:not(.dark) .text-slate-400{color:#3A434D}
@@ -178,7 +185,7 @@ html:not(.dark) .text-slate-800{color:#18212B}
                 <div class="relative z-10 flex flex-wrap items-center justify-between gap-4">
                     <div class="space-y-1.5">
                         <div class="text-xs font-mono font-bold tracking-wider text-blue-600 dark:text-blue-400 uppercase">
-                            NASA FIRMS &bull; VIIRS &bull; MODIS &bull; AI CLASSIFICATION
+                            NASA FIRMS &middot; VIIRS &middot; MODIS &middot; Automated classification
                         </div>
                         <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                             Thermal Anomaly Intelligence
@@ -233,7 +240,7 @@ html:not(.dark) .text-slate-800{color:#18212B}
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-2.5">
                     <div class="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200">
                         <i data-lucide="radar" class="w-4 h-4 text-blue-500"></i>
-                        Live Classification Pipeline &mdash; GIS Overlay
+                        Live classification — map overlay
                     </div>
                     <div class="flex flex-wrap items-center gap-2 text-xs">
                         <select id="pipeline-scenario" class="px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs">
@@ -246,8 +253,11 @@ html:not(.dark) .text-slate-800{color:#18212B}
                         <label class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium cursor-pointer">
                             <input type="checkbox" id="pipeline-live-osm" class="rounded"> Live OSM (Overpass)
                         </label>
+                        <button onclick="toggleSatelliteView()" id="btn-sat-view" title="Toggle satellite imagery basemap" class="px-3 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 flex items-center gap-1.5">
+                            <i data-lucide="satellite" class="w-3.5 h-3.5"></i> Satellite
+                        </button>
                         <button onclick="runPipelineScenario()" id="btn-pipeline-run" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-bold shadow-xs flex items-center gap-1.5">
-                            <i data-lucide="play" class="w-3.5 h-3.5"></i> Run AI Pipeline
+                            <i data-lucide="play" class="w-3.5 h-3.5"></i> Run classification
                         </button>
                         <button onclick="downloadGeoJSON()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-bold shadow-xs flex items-center gap-1.5">
                             <i data-lucide="download" class="w-3.5 h-3.5"></i> GeoJSON
@@ -293,7 +303,7 @@ html:not(.dark) .text-slate-800{color:#18212B}
                     </div>
                 </div>
 
-                <!-- Right: Selected Incident Telemetry -->
+                <!-- Right: Selected incident observation -->
                 <div class="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-5" id="ntro-details-panel">
                     <!-- Top Preview Banner -->
                     <div class="relative h-48 rounded-lg overflow-hidden bg-slate-900 flex items-end p-4 border border-slate-200 dark:border-slate-800">
@@ -323,7 +333,7 @@ html:not(.dark) .text-slate-800{color:#18212B}
                             <span class="text-base font-bold text-slate-900 dark:text-white" id="ntro-detail-class">Wildfire</span>
                         </div>
                         <div class="text-right">
-                            <span class="text-xs text-slate-400 block font-medium">AI Confidence</span>
+                            <span class="text-xs text-slate-500 block font-medium" title="Uncalibrated model score from the classification pipeline">Model score · uncalibrated</span>
                             <span class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono" id="ntro-detail-confidence">91%</span>
                         </div>
                     </div>
@@ -331,7 +341,7 @@ html:not(.dark) .text-slate-800{color:#18212B}
                     <!-- Telemetry Stats -->
                     <div class="grid grid-cols-3 gap-3 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-mono">
                         <div>
-                            <span class="text-[10px] text-slate-400 uppercase block">Peak Temp</span>
+                            <span class="text-[10px] text-slate-400 uppercase block">Peak temp</span>
                             <span class="text-sm font-bold text-slate-900 dark:text-white" id="ntro-detail-temp">623&deg;C</span>
                         </div>
                         <div>

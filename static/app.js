@@ -1029,6 +1029,27 @@ let pipelineMap = null;
 let pipelineLayer = null;
 let pipelineMarkers = [];
 
+let satelliteLayer = null;
+
+function toggleSatelliteView() {
+    if (typeof pipelineMap === 'undefined' || !pipelineMap) return;
+    const btn = document.getElementById('btn-sat-view');
+    if (!satelliteLayer) {
+        satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics'
+        });
+    }
+    if (pipelineMap.hasLayer(satelliteLayer)) {
+        pipelineMap.removeLayer(satelliteLayer);
+        btn.classList.remove('bg-orange-600', 'text-white', 'border-orange-600');
+        btn.title = 'Toggle satellite imagery basemap';
+    } else {
+        satelliteLayer.addTo(pipelineMap);
+        btn.classList.add('bg-orange-600', 'text-white', 'border-orange-600');
+        btn.title = 'Return to standard map';
+    }
+}
+
 function initPipelineMap() {
     if (pipelineMap) return;
     const el = document.getElementById('pipeline-map');
