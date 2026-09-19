@@ -30,6 +30,51 @@
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-orange-500 selection:text-white transition-colors duration-150">
 
+<!-- AUTH GATE (demo credentials, session-only) -->
+<div id="auth-gate" class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 grid lg:grid-cols-2">
+    <div class="relative hidden lg:block overflow-hidden bg-slate-950">
+      <div class="absolute inset-0 bg-cover bg-center opacity-60" style="background-image:url('/static/media/hero_india_night.jpg')"></div>
+      <div class="absolute inset-0" style="background:linear-gradient(115deg, rgba(10,12,16,.55) 0%, rgba(10,12,16,.2) 55%, rgba(10,12,16,.85) 100%)"></div>
+      <div class="absolute bottom-10 left-10 right-10">
+        <div class="font-mono text-[10px] tracking-[.25em] text-orange-400 mb-3">SUOMI NPP &middot; VIIRS DNB &middot; PUBLIC DOMAIN IMAGERY</div>
+        <p class="text-slate-200 text-lg font-light max-w-sm leading-relaxed">Every response begins with a signal detected from orbit.</p>
+      </div>
+    </div>
+    <div class="relative bg-[#f6f5f2] dark:bg-slate-950 flex items-center justify-center p-8">
+      <div class="w-full max-w-sm">
+        <div class="flex items-center gap-2 mb-10">
+          <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+          <span class="font-bold text-slate-900 dark:text-white text-lg">FireSense</span>
+          <span class="ml-auto font-mono text-[10px] tracking-widest text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 rounded-full px-2.5 py-1">DEMO ENVIRONMENT</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">Authorized access</h1>
+        <p class="text-sm text-slate-600 dark:text-slate-400 mb-8">Enter the FireSense operational environment. Credentials are simulated in this demo.</p>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="auth-operator">Operator ID</label>
+        <input id="auth-operator" type="text" value="analyst@ntro.gov.in" autocomplete="username"
+          class="w-full mb-5 px-3.5 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="auth-key">Authentication key</label>
+        <input id="auth-key" type="password" value="demo-access-key" autocomplete="current-password"
+          class="w-full mb-6 px-3.5 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="auth-role">Demo role</label>
+        <select id="auth-role" class="w-full mb-6 px-3.5 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm">
+          <option value="analyst">Analyst — NTRO Intelligence</option>
+          <option value="authority">Authority — Government Command</option>
+          <option value="responder">Responder — Field Operations</option>
+          <option value="admin">Administrator</option>
+        </select>
+        <button id="auth-submit" class="w-full py-3 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm transition-colors">Authenticate &amp; continue</button>
+        <p id="auth-error" class="hidden mt-3 text-xs text-red-600 dark:text-red-400"></p>
+        <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+          <span class="text-slate-500 dark:text-slate-400">Simulated data &middot; no live dispatch</span>
+          <button id="auth-citizen" class="font-bold text-orange-600 dark:text-orange-400 hover:underline">Citizen safety &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
     <!-- Top Navigation Bar -->
     <header class="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur sticky top-0 z-40 px-6 py-3 flex flex-wrap items-center justify-between gap-4 shadow-sm">
         <div class="flex items-center gap-6">
@@ -106,30 +151,26 @@
                 </div>
             </div>
 
-            <!-- 4 Stat Cards -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
-                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Hotspots Today</span>
-                    <div class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono" id="ntro-hotspots-count">247</div>
-                    <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">&uarr; 12 from yesterday</span>
+            <!-- Compact operational indicators -->
+            <div class="flex flex-wrap items-center gap-x-8 gap-y-3 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3.5 bg-white dark:bg-slate-900 shadow-sm">
+                <div class="flex items-baseline gap-2">
+                    <span class="text-xl font-bold font-mono text-slate-900 dark:text-white" id="ntro-hotspots-count">–</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">hotspots analyzed</span>
                 </div>
-
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
-                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Auto-Classified</span>
-                    <div class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono" id="ntro-auto-classified">–</div>
-                    <span class="text-[11px] text-slate-500 font-medium" id="ntro-classification-rate">computing…</span>
+                <span class="w-px h-6 bg-slate-200 dark:bg-slate-800 hidden sm:block"></span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-xl font-bold font-mono text-slate-900 dark:text-white" id="ntro-auto-classified">–</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400" id="ntro-classification-rate">auto-classified</span>
                 </div>
-
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
-                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Critical Alerts</span>
-                    <div class="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400 font-mono" id="ntro-critical-count">3</div>
-                    <span class="text-[11px] text-red-500 font-medium">Immediate action needed</span>
+                <span class="w-px h-6 bg-slate-200 dark:bg-slate-800 hidden sm:block"></span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-xl font-bold font-mono text-red-600 dark:text-red-400" id="ntro-critical-count">–</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">critical — action needed</span>
                 </div>
-
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
-                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Pending Review</span>
-                    <div class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono">6</div>
-                    <span class="text-[11px] text-slate-500 font-medium">Analyst verification</span>
+                <span class="w-px h-6 bg-slate-200 dark:bg-slate-800 hidden sm:block"></span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-xl font-bold font-mono text-slate-900 dark:text-white" id="ntro-avg-confidence">–</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">avg model score</span>
                 </div>
             </div>
 
@@ -156,7 +197,7 @@
                             <option value="punjab_stubble">🌾 Sangrur Stubble Burning (Punjab)</option>
                             <option value="similipal_wildfire">🌲 Similipal Wildfire (Odisha)</option>
                             <option value="angul_thermal_plant">⚡ Angul Thermal Power Plant (Odisha)</option>
-                            <option value="clandestine_thermal_anomaly">⚠️ Clandestine Anomaly (Singrauli)</option>
+                            <option value="clandestine_thermal_anomaly">⚠️ Unregistered Anomaly (Singrauli)</option>
                         </select>
                         <label class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium cursor-pointer">
                             <input type="checkbox" id="pipeline-live-osm" class="rounded"> Live OSM (Overpass)
@@ -176,7 +217,7 @@
                         <div class="flex flex-wrap gap-3 mt-2 text-[11px] font-mono text-slate-500 dark:text-slate-400">
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block"></span>Gas Flare / Industrial</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>Power / Steel / Mining</span>
-                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span>Wildfire / Clandestine</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span>Wildfire / Unregistered</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>Crop Burning</span>
                         </div>
                     </div>
@@ -561,13 +602,13 @@
                     <div class="space-y-1">
                         <div class="flex items-center gap-2 text-xs font-mono font-bold tracking-wider text-orange-600 dark:text-orange-400 uppercase">
                             <i data-lucide="radio" class="w-4 h-4 text-orange-500 animate-pulse"></i>
-                            <span>NDRF UNIT 3 &bull; TACTICAL FIELD TERMINAL</span>
+                            <span>NDRF Unit 3 &middot; Field Terminal</span>
                         </div>
                         <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                             Responder Operations
                         </h2>
                         <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                            Direct satellite telemetry, access corridors &amp; mission dispatch state.
+                            Assigned mission, site conditions and next actions.
                         </p>
                     </div>
 
@@ -584,7 +625,7 @@
                 </div>
             </div>
 
-            <!-- Active Incident Tactical Card -->
+            <!-- Active Mission Card -->
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
                     <div>
@@ -598,7 +639,7 @@
                     </div>
                 </div>
 
-                <!-- Telemetry 4-Pack (Tactical Specs) -->
+                <!-- Mission Telemetry -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
                         <span class="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400 font-bold block">Target GPS</span>
@@ -627,11 +668,11 @@
                     </div>
                 </div>
 
-                <!-- Tactical Access Corridor -->
+                <!-- Access Route -->
                 <div class="p-4 rounded-xl bg-orange-50/60 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/60 space-y-2">
                     <div class="flex items-center justify-between text-xs">
                         <span class="font-bold text-orange-900 dark:text-orange-300 flex items-center gap-1.5 font-mono uppercase tracking-wider">
-                            <i data-lucide="navigation" class="w-4 h-4 text-orange-500"></i> Tactical Ingress Corridor
+                            <i data-lucide="navigation" class="w-4 h-4 text-orange-500"></i> Access Route
                         </span>
                         <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200" id="resp-access-dist">2.4 KM ACCESS</span>
                     </div>
@@ -684,7 +725,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <textarea id="resp-sitrep-input" rows="2" placeholder="Enter tactical sitrep (e.g., 2 water tenders deployed on south perimeter, wind gusting 22 km/h, evacuating residential block B)..." class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 outline-hidden"></textarea>
+                    <textarea id="resp-sitrep-input" rows="2" placeholder="Field report (e.g., 2 water tenders deployed on south perimeter, wind gusting 22 km/h, evacuating residential block B)..." class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 outline-hidden"></textarea>
                     <div class="flex items-center justify-between gap-3">
                         <button onclick="submitResponderSitrep()" class="px-5 py-2.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-sm flex items-center gap-2 transition-transform active:scale-98">
                             <i data-lucide="send" class="w-3.5 h-3.5"></i> Transmit SitRep to Command
