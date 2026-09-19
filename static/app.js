@@ -1051,6 +1051,14 @@ function classColor(label) {
     return '#8b5cf6';
 }
 
+const SCENARIO_IMAGES = {
+    jamnagar_refinery: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ece?auto=format&fit=crop&w=1200&q=80',
+    angul_thermal_plant: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
+    similipal_wildfire: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80',
+    punjab_stubble: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+    clandestine_thermal_anomaly: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=1200&q=80'
+};
+
 async function runPipelineScenario() {
     initPipelineMap();
     const scenarioSelect = document.getElementById('pipeline-scenario');
@@ -1097,6 +1105,12 @@ async function runPipelineScenario() {
 
         if (fc.features && fc.features.length) {
             pipelineMap.fitBounds(L.featureGroup(pipelineMarkers).getBounds().pad(0.5));
+        }
+
+        // distinct contextual imagery per scenario
+        const previewEl = document.getElementById('ntro-preview-image');
+        if (previewEl && SCENARIO_IMAGES[scenarioId]) {
+            previewEl.style.backgroundImage = `url('${SCENARIO_IMAGES[scenarioId]}')`;
         }
 
         const countEl = document.getElementById('pipeline-result-count');
