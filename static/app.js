@@ -1059,6 +1059,18 @@ const SCENARIO_IMAGES = {
     clandestine_thermal_anomaly: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=1200&q=80'
 };
 
+function applyScenarioPreview(scenarioId) {
+    const previewEl = document.getElementById('ntro-preview-image');
+    if (previewEl && SCENARIO_IMAGES[scenarioId]) {
+        previewEl.style.backgroundImage = `url('${SCENARIO_IMAGES[scenarioId]}')`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const sel = document.getElementById('pipeline-scenario');
+    if (sel) sel.addEventListener('change', () => applyScenarioPreview(sel.value));
+});
+
 async function runPipelineScenario() {
     initPipelineMap();
     const scenarioSelect = document.getElementById('pipeline-scenario');
@@ -1107,11 +1119,7 @@ async function runPipelineScenario() {
             pipelineMap.fitBounds(L.featureGroup(pipelineMarkers).getBounds().pad(0.5));
         }
 
-        // distinct contextual imagery per scenario
-        const previewEl = document.getElementById('ntro-preview-image');
-        if (previewEl && SCENARIO_IMAGES[scenarioId]) {
-            previewEl.style.backgroundImage = `url('${SCENARIO_IMAGES[scenarioId]}')`;
-        }
+        applyScenarioPreview(scenarioId);
 
         const countEl = document.getElementById('pipeline-result-count');
         if (countEl) countEl.textContent = `${fc.features?.length || 0} hotspots`;
