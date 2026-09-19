@@ -341,7 +341,7 @@ footer{border-top:1px solid var(--line);background:var(--bg-2)}
     </div>
     <div style="display:flex;align-items:center;gap:22px">
       <span class="status-chip"><span class="pulse" style="width:7px;height:7px"></span>NRT · DEMO DATA</span>
-      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme" title="Toggle light / dark">&#9789;</button>
+      <!-- Theme toggle removed -->
       <a class="nav-cta" href="/app">Launch Dashboard <span class="arrow">→</span></a>
     </div>
   </div>
@@ -383,7 +383,7 @@ footer{border-top:1px solid var(--line);background:var(--bg-2)}
     <h1>From signal<br><span class="dim">to action.</span></h1>
     <p class="body-lg hero-sub">FireSense turns raw satellite heat detections into classified, prioritized incidents — so responders act on what matters, minutes faster.</p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="/app">Explore FireSense <span class="arrow">→</span></a>
+      <a class="btn btn-primary" href="/app?portal=citizen">Explore FireSense <span class="arrow">→</span></a>
       <a class="btn btn-ghost" href="#detect">How it works</a>
     </div>
 
@@ -653,18 +653,23 @@ footer{border-top:1px solid var(--line);background:var(--bg-2)}
   var tbtn = document.getElementById('theme-toggle');
   function applyTheme(t){
     root.setAttribute('data-theme', t);
-    tbtn.innerHTML = t === 'light' ? '\u2600' : '\u263e';
-    tbtn.setAttribute('title', 'Switch to ' + (t === 'light' ? 'dark' : 'light') + ' theme');
+    if (tbtn) {
+        tbtn.innerHTML = t === 'light' ? '\u2600' : '\u263e';
+        tbtn.setAttribute('title', 'Switch to ' + (t === 'light' ? 'dark' : 'light') + ' theme');
+    }
   }
   var saved = null;
   try { saved = localStorage.getItem('fs-theme'); } catch(e){}
   if (saved === 'light' || saved === 'dark') applyTheme(saved);
   else if (matchMedia('(prefers-color-scheme: light)').matches) applyTheme('light');
-  tbtn.addEventListener('click', function(){
-    var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    applyTheme(next);
-    try { localStorage.setItem('fs-theme', next); } catch(e){}
-  });
+  
+  if (tbtn) {
+      tbtn.addEventListener('click', function(){
+        var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        applyTheme(next);
+        try { localStorage.setItem('fs-theme', next); } catch(e){}
+      });
+  }
 
   // nav scroll state
   var nav = document.getElementById('nav');
