@@ -1,0 +1,470 @@
+<USER_REQUEST>
+MODEL RECOMMENDATION: PRO
+REASON: Final repository audit only. No feature development is required; we need independent verification that the completed FireSense implementation matches the claimed architecture, API contract, tests, frontend integration, demo flow, and documentation.
+
+============================================================
+FINAL FIRESENSE RELEASE AUDIT
+============================================================
+
+The FireSense implementation has been reported as complete through Phase 13.
+
+DO NOT IMPLEMENT NEW FEATURES.
+
+DO NOT MODIFY THE DATABASE SCHEMA.
+
+DO NOT CREATE A NEW ALEMBIC MIGRATION.
+
+DO NOT CHANGE THE API CONTRACT.
+
+DO NOT REFACTOR WORKING CODE.
+
+This is a READ-ONLY RELEASE AUDIT.
+
+============================================================
+1. TEST VERIFICATION
+============================================================
+
+Run the actual complete backend test suite:
+
+pytest -q
+
+Report:
+
+- collected
+- passed
+- failed
+- skipped
+- warnings
+
+Do not rely on the previously reported "119 passed".
+
+Verify it yourself.
+
+============================================================
+2. ALEMBIC / DATABASE VERIFICATION
+============================================================
+
+Verify:
+
+alembic current
+alembic heads
+
+Expected head:
+
+a2b3c4d5e6f7
+
+Verify that:
+
+schema-vertical-slice-stable
+
+still points to the expected schema checkpoint.
+
+DO NOT MODIFY THE DATABASE.
+
+============================================================
+3. API CONTRACT AUDIT
+============================================================
+
+Inspect the actual FastAPI route definitions.
+
+Verify these endpoints exist and use the correct HTTP methods:
+
+POST /auth/login
+GET /auth/me
+
+GET /api/hotspots
+GET /api/incidents
+GET /api/incidents/{id}
+
+POST /api/incidents/{id}/classify
+GET /api/incidents/{id}/context
+GET /api/incidents/{id}/risk
+
+POST /api/incidents/{id}/alert
+PATCH /api/incidents/{id}/status
+
+GET /api/responders/nearby
+GET /public/alerts
+
+GET /health
+GET /api/v2/health
+GET /api/v2/health/database
+
+Also verify any /api/v2 compatibility routes already implemented.
+
+Do not modify them.
+
+============================================================
+4. LIFECYCLE AUDIT
+============================================================
+
+Inspect the actual status transition implementation.
+
+Verify:
+
+DETECTED
+→ CLASSIFIED
+→ ASSESSED
+→ ALERTED
+→ ACKNOWLEDGED
+→ EN_ROUTE
+→ ARRIVED
+→ CONTAINED
+→ RESOLVED
+
+And:
+
+ACKNOWLEDGED → RESOLVED
+
+Verify these are NOT present as canonical incident states:
+
+DISPATCHED
+RESPONDING
+MITIGATED
+
+Verify alert creation does NOT automatically mutate incident.status.
+
+Verify status transitions use PATCH, not PUT.
+
+============================================================
+5. CONFIDENCE / RISK TERMINOLOGY AUDIT
+============================================================
+
+Search the repository for misleading terminology.
+
+Verify the implementation keeps these concepts separate:
+
+detection_confidence
+classification_confidence
+risk_score
+
+Verify risk_score is described as:
+
+PRIORITY SCORE
+
+and not:
+
+probability
+fire probability
+probability of fire
+
+Verify XGBoost confidence is described as uncalibrated classification confidence and not physical-fire probability.
+
+Verify growth is described as:
+
+GROWTH PROXY
+
+and not fire-spread prediction.
+
+Verify thermal observations are described honestly as:
+
+THERMAL ANOMALY
+
+unless ground confirmation exists.
+
+============================================================
+6. ALERT AUDIT
+============================================================
+
+Verify alert payload contains the expected fields and preserves:
+
+incident_id
+location
+classification
+severity
+risk_score
+is_simulated
+risk_reasons
+nearest_assets
+recommended_responder
+
+Verify:
+
+is_simulated == true
+
+Verify UI/documentation uses:
+
+SIMULATED DISPATCH
+
+Verify there is no claim that a real government emergency system was contacted.
+
+============================================================
+7. FRONTEND ↔ BACKEND AUDIT
+============================================================
+
+Inspect the actual frontend API calls.
+
+Verify that the frontend consumes the FastAPI backend for canonical data.
+
+Look specifically for:
+
+- stale mock API calls
+- hardcoded incidents
+- hardcoded risk scores
+- hardcoded classifications
+- fake lifecycle state
+- fake alert success
+- duplicate frontend risk calculations
+- old legacy endpoint usage
+
+Do not modify anything.
+
+Report findings only.
+
+============================================================
+8. ROLE / RBAC AUDIT
+============================================================
+
+Inspect actual authorization guards.
+
+Verify roles:
+
+analyst
+authority
+responder
+admin
+
+and public/citizen behavior.
+
+Verify unauthorized access produces the intended 401/403 responses.
+
+Pay particular attention to:
+
+classification
+context
+risk
+alert
+status transitions
+public alerts
+responder information
+
+Do not weaken permissions.
+
+============================================================
+9. PUBLIC DATA PRIVACY AUDIT
+============================================================
+
+Inspect:
+
+GET /public/alerts
+
+Verify public responses do NOT expose:
+
+- JWT
+- password hashes
+- internal users
+- private responder contact information
+- internal audit metadata
+- unnecessary operational information
+
+============================================================
+10. DEMO SCENARIO AUDIT
+============================================================
+
+Inspect the actual seed_demo.py and scenario definitions.
+
+Verify the actual supported scenarios.
+
+Expected canonical scenarios:
+
+industrial_fire
+gas_flare
+wildfire
+crop_burning
+unknown
+
+If additional scenarios exist, report them.
+
+Do not invent or rename scenarios.
+
+Verify:
+
+APP_MODE=demo
+
+DATA_SOURCE=cache
+
+or the actual equivalent implemented by the repository.
+
+Verify the demo does not require live NASA connectivity.
+
+============================================================
+11. SINGLE INCIDENT ID AUDIT
+============================================================
+
+Inspect the E2E integration test and implementation.
+
+Verify the SAME incident ID is preserved through:
+
+incident retrieval
+classification
+context
+risk
+alert
+ACKNOWLEDGED
+EN_ROUTE
+ARRIVED
+CONTAINED
+RESOLVED
+audit logs
+
+============================================================
+12. AUDIT LOG AUDIT
+============================================================
+
+Verify logs exist for:
+
+classification
+alert dispatch
+every status transition
+
+Verify canonical timestamp field:
+
+changed_at
+
+Verify:
+
+changed_by
+
+Verify logs reference the same incident.
+
+============================================================
+13. ML AUDIT
+============================================================
+
+Inspect XGBoost loading/inference.
+
+Verify:
+
+- runtime does NOT auto-train
+- missing artifact falls back safely
+- deterministic classifier fallback exists
+- provenance is recorded
+- synthetic benchmark limitations are documented
+- no unsupported accuracy claims exist
+
+Do not retrain anything.
+
+============================================================
+14. SECURITY AUDIT
+============================================================
+
+Check:
+
+.gitignore
+.env.example
+configuration
+Dockerfile
+docker-compose.yml
+logging
+JWT configuration
+CORS
+
+Verify no committed:
+
+password
+database credential
+JWT secret
+API token
+
+Do not print secrets in the audit.
+
+============================================================
+15. DOCUMENTATION AUDIT
+============================================================
+
+Verify these exist and reflect the actual repository:
+
+README.md
+
+docs/SIH_QA.md
+
+docs/DEMO_RUNBOOK.md
+
+docs/IMPLEMENTATION_STATUS.md
+
+FINAL_IMPLEMENTATION_REPORT.md
+
+Verify documentation does not claim functionality that the repository does not actually implement.
+
+============================================================
+16. FINAL DEMO DRY RUN
+============================================================
+
+DO NOT modify anything.
+
+Using the existing project:
+
+1. Start required services.
+2. Seed one scenario.
+3. Retrieve incident.
+4. Classify.
+5. Get context.
+6. Get risk.
+7. Dispatch simulated alert.
+8. ACKNOWLEDGED.
+9. EN_ROUTE.
+10. ARRIVED.
+11. CONTAINED.
+12. RESOLVED.
+13. Verify audit trail.
+
+Record whether the complete flow actually works.
+
+============================================================
+17. FINAL RESULT
+============================================================
+
+Create:
+
+docs/FINAL_RELEASE_AUDIT.md
+
+with:
+
+A. Test result
+B. Alembic result
+C. Schema checkpoint result
+D. API contract result
+E. Lifecycle result
+F. Frontend integration result
+G. RBAC result
+H. Demo scenario result
+I. ML result
+J. Security result
+K. Documentation result
+L. Complete E2E result
+M. Any discrepancies
+
+For every section use only:
+
+PASS
+FAIL
+WARNING
+
+Do not use vague terms.
+
+If everything is verified:
+
+FINAL RELEASE STATUS: VERIFIED
+
+If anything differs from the previous completion report:
+
+FINAL RELEASE STATUS: DISCREPANCIES FOUND
+
+Do not fix discrepancies during this audit.
+
+STOP after the audit.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-19T16:30:12+05:30.
+
+The user's current state is as follows:
+Active Document: c:\Users\adity\Downloads\sih-thermal-intel\backend\app\api\hotspots.py (LANGUAGE_PYTHON)
+Cursor is on line: 21
+Other open documents:
+- c:\Users\adity\Downloads\sih-thermal-intel\backend\app\api\auth.py (LANGUAGE_PYTHON)
+- c:\Users\adity\Downloads\sih-thermal-intel\tests\test_database.py (LANGUAGE_PYTHON)
+- c:\Users\adity\Downloads\sih-thermal-intel\backend\app\api\hotspots.py (LANGUAGE_PYTHON)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.8 Flash (Medium) to Gemini 3.1 Pro (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

@@ -1,0 +1,216 @@
+{
+  "description": "Fixtures for Government Command & Responder API responses.",
+  "api_contract_version": "1.0.0",
+  "owner": "Aditya (backend) + Adil (frontend)",
+
+  "alert_response": {
+    "POST /api/incidents/:id/alert": {
+      "description": "Simulated dispatch alert sent to assigned authority. NEVER reaches a real government system.",
+      "success_200": {
+        "success": true,
+        "incident_id": "INC-2026-0044",
+        "alert_id": "ALERT-OD-9041",
+        "alert_type": "SIMULATED_DISPATCH",
+        "status": "DISPATCHED",
+        "dispatched_to": "Baripada Fire & Emergency Services",
+        "eta": "25 mins",
+        "alert_log": "SIMULATED DISPATCH — Alert transmitted to Baripada Fire & Emergency Services via simulated emergency channel. This is NOT a real government alert.",
+        "timestamp": "2026-09-19T10:30:00+05:30",
+        "note": "Alert is a training simulation and does not reach any live government system."
+      },
+      "invalid_transition_409": {
+        "success": false,
+        "error": "Invalid state transition: RESOLVED → DISPATCHED. Incident is already resolved.",
+        "current_status": "RESOLVED",
+        "requested_status": "DISPATCHED",
+        "allowed_transitions": []
+      },
+      "not_found_404": {
+        "error": "Incident not found"
+      },
+      "network_failure": {
+        "error": "Network error: Failed to fetch"
+      }
+    }
+  },
+
+  "status_response": {
+    "PATCH /api/incidents/:id/status": {
+      "description": "Update incident status with transition validation. Returns 409 on invalid transitions.",
+      "success_200": {
+        "success": true,
+        "incident_id": "INC-2026-0044",
+        "status": "EN ROUTE",
+        "previous_status": "ACKNOWLEDGED",
+        "ground_note": "Unit departing staging area. Wind shifting NE at 15 km/h.",
+        "responder_id": "UNIT-001",
+        "message": "Incident INC-2026-0044 updated from ACKNOWLEDGED to EN ROUTE",
+        "timestamp": "2026-09-19T10:45:00+05:30"
+      },
+      "invalid_transition_409": {
+        "success": false,
+        "error": "Invalid transition: DISPATCHED → RESOLVED. Must go through ACKNOWLEDGED → EN ROUTE → ARRIVED → CONTAINED first.",
+        "current_status": "DISPATCHED",
+        "requested_status": "RESOLVED",
+        "allowed_transitions": ["ACKNOWLEDGED", "INVESTIGATING"],
+        "transition_table": {
+          "DISPATCHED": ["ACKNOWLEDGED", "INVESTIGATING"],
+          "ACKNOWLEDGED": ["EN ROUTE"],
+          "EN ROUTE": ["ARRIVED"],
+          "ARRIVED": ["CONTAINED"],
+          "CONTAINED": ["RESOLVED"],
+          "RESOLVED": []
+        }
+      },
+      "forbidden_403": {
+        "success": false,
+        "error": "Forbidden: Responder UNIT-001 is not assigned to incident INC-2026-0044"
+      },
+      "not_found_404": {
+        "error": "Incident not found"
+      }
+    }
+  },
+
+  "incident_response": {
+    "GET /api/incidents": {
+      "description": "List all incidents with current status (includes overrides from state transitions).",
+      "success_200": {
+        "incidents": [
+          {
+            "id": "INC-2026-0042",
+            "title": "Similipal Forest Fire",
+            "timestamp": "11:42 IST (Satellite Overpass)",
+            "coordinates": {"lat": 21.8540, "lon": 86.3520},
+            "location_name": "Similipal National Park, Mayurbhanj District, Odisha",
+            "classification": "WILDFIRE",
+            "confidence": 91,
+            "risk_score": 87,
+            "risk_label": "CRITICAL",
+            "frp_mw": 142.6,
+            "status": "NEW",
+            "assigned_authority": {
+              "name": "Baripada Fire & Emergency Services",
+              "jurisdiction": "Mayurbhanj District, Ward 4",
+              "distance_km": 14.2,
+              "eta_mins": 25
+            }
+          }
+        ]
+      }
+    }
+  },
+
+  "responders_nearby": {
+    "GET /api/incidents/:id/responders": {
+      "description": "List of nearest responder units for a given incident.",
+      "success_200": {
+        "incident_id": "INC-2026-0042",
+        "responders": [
+          {
+            "id": "UNIT-001",
+            "name": "NDRF Team Alpha",
+            "unit": "NDRF-OD-03",
+            "type": "NDRF",
+            "distance_km": 14.2,
+            "eta_mins": 25,
+            "status": "AVAILABLE",
+            "gps": {"lat": 21.8320, "lon": 86.3200}
+          },
+          {
+            "id": "UNIT-002",
+            "name": "Odisha Fire Brigade",
+            "unit": "OFB-BLP-12",
+            "type": "Fire Brigade",
+            "distance_km": 18.5,
+            "eta_mins": 32,
+            "status": "AVAILABLE",
+            "gps": {"lat": 21.8100, "lon": 86.2800}
+          },
+          {
+            "id": "UNIT-003",
+            "name": "District Civil Defense",
+            "unit": "DCD-MBR-04",
+            "type": "Civil Defense",
+            "distance_km": 22.1,
+            "eta_mins": 40,
+            "status": "EN_ROUTE_OTHER",
+            "gps": {"lat": 21.7900, "lon": 86.2500}
+          }
+        ]
+      },
+      "not_found_404": {
+        "error": "Incident not found"
+      }
+    }
+  },
+
+  "pdf_export": {
+    "GET /api/export/:id/pdf": {
+      "description": "Generate and return PDF export URL for incident dossier.",
+      "success_200": {
+        "success": true,
+        "incident_id": "INC-2026-0044",
+        "filename": "INC-2026-0044_Dossier_2026-09-19.pdf",
+        "pdf_url": "/exports/INC-2026-0044_Dossier_2026-09-19.pdf",
+        "generated_at": "2026-09-19T10:30:00+05:30"
+      },
+      "not_found_404": {
+        "error": "Incident not found"
+      }
+    }
+  },
+
+  "status_log": {
+    "GET /api/incidents/:id/status-log": {
+      "description": "Chronological log of all status transitions for an incident.",
+      "success_200": {
+        "incident_id": "INC-2026-0044",
+        "log": [
+          {
+            "status": "NEW",
+            "timestamp": "2026-09-19T09:00:00+05:30",
+            "note": "Incident created from satellite detection",
+            "actor": "SYSTEM"
+          },
+          {
+            "status": "INVESTIGATING",
+            "timestamp": "2026-09-19T09:15:00+05:30",
+            "note": "Analyst acknowledged and began investigation",
+            "actor": "ANALYST-001"
+          },
+          {
+            "status": "DISPATCHED",
+            "timestamp": "2026-09-19T09:30:00+05:30",
+            "note": "SIMULATED DISPATCH — Alert sent to Baripada Fire & Emergency Services",
+            "actor": "GOV-CMD-001"
+          },
+          {
+            "status": "ACKNOWLEDGED",
+            "timestamp": "2026-09-19T09:45:00+05:30",
+            "note": "Unit Alpha acknowledged dispatch order",
+            "actor": "UNIT-001"
+          }
+        ]
+      }
+    }
+  },
+
+  "transition_table": {
+    "description": "Valid state transitions. Backend rejects any transition not in this table with HTTP 409.",
+    "table": {
+      "NEW": ["INVESTIGATING"],
+      "INVESTIGATING": ["VERIFIED"],
+      "VERIFIED": ["DISPATCHED"],
+      "DISPATCHED": ["ACKNOWLEDGED", "INVESTIGATING"],
+      "ACKNOWLEDGED": ["EN ROUTE"],
+      "EN ROUTE": ["ARRIVED"],
+      "ARRIVED": ["CONTAINED"],
+      "CONTAINED": ["RESOLVED"],
+      "RESOLVED": []
+    },
+    "allowed_from_dispatched": ["ACKNOWLEDGED", "INVESTIGATING"],
+    "allowed_from_resolved": [],
+    "note": "This table is owned by Faizaan (backend). Frontend must validate client-side but always defer to server."
+  }
+}

@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: firesense_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: firesense
+    ports:
+      - "5432:5432"
+    volumes:
+      - firesense_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d firesense"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    container_name: firesense_backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/firesense
+      JWT_SECRET_KEY: firesense-docker-production-secret-key-32chars
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 1440
+      APP_MODE: demo
+      DATA_SOURCE: cache
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  firesense_db_data:

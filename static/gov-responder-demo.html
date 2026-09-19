@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroThermal | Government Command & Responder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { orange: '#f97316', red: '#ef4444', blue: '#2563eb', amber: '#f59e0b', green: '#10b981' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @keyframes pulse-glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .live-pulse { animation: pulse-glow 2s ease-in-out infinite; }
+        .modal-backdrop { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+
+    <!-- ═══ TOP NAV ═══ -->
+    <header class="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-40 px-6 py-3 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 font-bold text-lg text-white">
+                <span class="text-orange-500 text-xl">🔥</span>
+                <span>AeroThermal</span>
+            </div>
+            <nav class="flex items-center gap-1.5 p-1 bg-slate-800/80 rounded-xl border border-slate-700 text-xs font-semibold">
+                <button onclick="switchView('government')" id="tab-gov" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200/80 transition-all font-bold">
+                    🏛️ Government Command
+                </button>
+                <button onclick="switchView('responder')" id="tab-resp" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition-all">
+                    🚒 Responder Ops
+                </button>
+            </nav>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-950/60 border border-red-800 text-red-400 text-xs font-bold font-mono">
+                <span class="w-2 h-2 rounded-full bg-red-500 live-pulse"></span>
+                <span id="active-alert-count">4 Active</span>
+            </div>
+            <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700 text-[11px] font-medium text-slate-400">
+                <button onclick="setTheme('light')" class="px-2 py-0.5 rounded hover:text-white">☀️</button>
+                <button onclick="setTheme('dark')" id="btn-dark" class="px-2 py-0.5 rounded bg-slate-700 text-white font-semibold">🌙</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- PORTAL: GOVERNMENT COMMAND CENTER                         -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div id="view-government" class="space-y-6">
+            <!-- Header -->
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-white">Incident Command Center</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Real-time situational awareness &bull; Master-Detail View &bull; All jurisdictions</p>
+                </div>
+                <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-950/60 border border-red-800 text-red-400 text-xs font-bold font-mono">
+                    <span class="w-2 h-2 rounded-full bg-red-500 live-pulse"></span>
+                    <span id="gov-stat-active">4 Active Incidents</span>
+                </div>
+            </div>
+
+            <!-- Stat Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="gov-stats"></div>
+
+            <!-- Master-Detail -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- LEFT: Incident List -->
+                <div class="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 text-xs font-bold">
+                        <span class="text-slate-800 dark:text-slate-200">Active Incidents</span>
+                        <span class="text-slate-400 font-mono" id="gov-incident-count">4 events</span>
+                    </div>
+                    <div class="space-y-2 max-h-[600px] overflow-y-auto pr-1" id="gov-incident-list"></div>
+                </div>
+
+                <!-- RIGHT: Dossier -->
+                <div class="lg:col-span-7 space-y-4" id="gov-dossier-panel">
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 shadow-sm text-center">
+                        <div class="text-slate-400 text-sm font-medium">Select an incident from the list to view its dossier.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- PORTAL: RESPONDER OPERATIONS                              -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div id="view-responder" class="hidden space-y-6">
+            <!-- Responder Header -->
+            <div class="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 sm:p-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2 text-xs font-mono font-bold tracking-wider text-orange-600 dark:text-orange-400 uppercase">
+                            <span class="animate-pulse">📡</span>
+                            <span>NDRF UNIT &bull; TACTICAL FIELD TERMINAL</span>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">Responder Operations</h2>
+                        <p class="text-xs text-slate-400">Direct satellite telemetry, access corridors &amp; mission dispatch state.</p>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <select id="resp-incident-select" onchange="respSelectIncident(this.value)" class="px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-xs shadow-xs focus:ring-2 focus:ring-orange-500 outline-none"></select>
+                        <span class="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-400 text-xs font-bold font-mono flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> FIELD READY
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tactical Card -->
+            <div id="resp-tactical-card" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-5 space-y-4"></div>
+
+            <!-- State Machine -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-5 space-y-4" id="resp-state-machine"></div>
+
+            <!-- Status History -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-5 space-y-3" id="resp-status-history"></div>
+        </div>
+    </main>
+
+    <!-- ═══ ALERT MODAL ═══ -->
+    <div id="alert-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4">
+        <div class="bg-white dark:bg-slate-900 border-2 border-amber-400 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="closeAlertModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">✕</button>
+            <div id="alert-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- ═══ TOAST ═══ -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
+    <script>
+    // ══════════════════════════════════════════════════════════════════════
+    // MOCK DATA STORE (simulates backend — same incident object across roles)
+    // ══════════════════════════════════════════════════════════════════════
+    const STATUS_FLOW = ['NEW','INVESTIGATING','VERIFIED','DISPATCHED','ACKNOWLEDGED','EN ROUTE','ARRIVED','CONTAINED','RESOLVED'];
+    const STATUS_COLORS = {
+        'NEW':'bg-slate-500','INVESTIGATING':'bg-blue-500','VERIFIED':'bg-indigo-500',
+        'DISPATCHED':'bg-amber-500','ACKNOWLEDGED':'bg-orange-500','EN ROUTE':'bg-orange-600',
+        'ARRIVED':'bg-orange-700','CONTAINED':'bg-red-600','RESOLVED':'bg-emerald-600'
+    };
+    const VALID_TRANSITIONS = {
+        NEW:['INVESTIGATING'], INVESTIGATING:['VERIFIED'], VERIFIED:['DISPATCHED'],
+        DISPATCHED:['ACKNOWLEDGED','INVESTIGATING'], ACKNOWLEDGED:['EN ROUTE'],
+        'EN ROUTE':['ARRIVED'], ARRIVED:['CONTAINED'], CONTAINED:['RESOLVED'], RESOLVED:[]
+    };
+
+    // Shared incident objects (same across Government & Responder)
+    let incidents = [
+        {
+            id:'INC-2026-0042', title:'Similipal Forest Fire', timestamp:'11:42 IST',
+            coordinates:{lat:21.8540,lon:86.3520}, location_name:'Similipal National Park, Mayurbhanj, Odisha',
+            classification:'WILDFIRE', confidence:91, risk_score:87, risk_label:'CRITICAL',
+            frp_mw:142.6, brightness_c:96.2, status:'NEW',
+            assigned_authority:{name:'Baripada Fire & Emergency Services',jurisdiction:'Mayurbhanj District',distance_km:14.2,eta_mins:25,contact_role:'Station Officer'},
+            confidence_breakdown:{score:91,rating:'HIGH',sensor_signal:'96% (Sharp 4µm thermal infrared contrast)',cross_satellite:'Confirmed by 2 separate satellite passes'},
+            wind_corridor:{speed_kmh:18,direction:'NE',potential_corridor_km:2.8},
+            explain_classification:{
+                evidence:['Fire area grew +42% over 3 days','Located in dense protected forest','No factories within 12 km','Very high heat intensity'],
+                counter_evidence:['Possible light cloud haze (20%)','No controlled burn permits recorded']
+            },
+            assets_at_risk:[
+                {asset:'Village Kaptipada',type:'Habitation',population:'1,420 people',distance_km:1.4,risk_tier:'CRITICAL'},
+                {asset:'NH-49 Highway',type:'Transport',population:'Major Transit Road',distance_km:2.1,risk_tier:'HIGH'},
+                {asset:'Kaptipada Health Centre',type:'Healthcare',population:'Critical Care',distance_km:4.2,risk_tier:'ELEVATED'}
+            ],
+            status_log:[
+                {status:'NEW',timestamp:'2026-09-19T09:00:00+05:30',note:'Incident created from VIIRS satellite detection',actor:'SYSTEM'}
+            ]
+        },
+        {
+            id:'INC-2026-0043', title:'Jamnagar Refinery Flare Stack', timestamp:'11:42 IST',
+            coordinates:{lat:22.3585,lon:69.8310}, location_name:'Petrochemical Complex, Jamnagar, Gujarat',
+            classification:'FACTORY FLARE', confidence:94, risk_score:38, risk_label:'SAFE / MONITOR',
+            frp_mw:88.4, brightness_c:85.1, status:'VERIFIED',
+            assigned_authority:{name:'GPCB Jamnagar',jurisdiction:'Jamnagar Industrial Cluster',distance_km:3.8,eta_mins:10,contact_role:'Environmental Inspector'},
+            confidence_breakdown:{score:94,rating:'VERY HIGH',sensor_signal:'98% (Constant hydrocarbon flare)',cross_satellite:'48 repeat passes at exact same point'},
+            wind_corridor:{speed_kmh:12,direction:'SW',potential_corridor_km:1.2},
+            explain_classification:{
+                evidence:['Heat detected 48 times in 60 days at same spot','Matches registered refinery chimney','Located inside refinery boundary'],
+                counter_evidence:['Small heat uptick (+15 MW) for routine review']
+            },
+            assets_at_risk:[
+                {asset:'Refinery Tank Farm B',type:'Industrial',population:'Plant Personnel',distance_km:0.6,risk_tier:'MODERATE'},
+                {asset:'Moti Khavdi Township',type:'Habitation',population:'Corporate Colony',distance_km:3.4,risk_tier:'SAFE'}
+            ],
+            status_log:[
+                {status:'NEW',timestamp:'2026-09-19T08:30:00+05:30',note:'Initial detection',actor:'SYSTEM'},
+                {status:'INVESTIGATING',timestamp:'2026-09-19T08:45:00+05:30',note:'Analyst reviewing',actor:'ANALYST-001'},
+                {status:'VERIFIED',timestamp:'2026-09-19T09:00:00+05:30',note:'Confirmed as routine gas flare',actor:'ANALYST-001'}
+            ]
+        },
+        {
+            id:'INC-2026-0044', title:'Sangrur Farm Stubble Burning', timestamp:'11:42 IST',
+            coordinates:{lat:30.2480,lon:75.8390}, location_name:'Sangrur Agricultural District, Punjab',
+            classification:'CROP SMOKE', confidence:89, risk_score:62, risk_label:'HIGH (AIR QUALITY)',
+            frp_mw:24.5, brightness_c:58.8, status:'DISPATCHED',
+            assigned_authority:{name:'District Agriculture & Air Quality Squad',jurisdiction:'Sangrur Block 2',distance_km:8.5,eta_mins:15,contact_role:'Nodal Revenue Officer'},
+            confidence_breakdown:{score:89,rating:'HIGH',sensor_signal:'90% (Low-intensity smoke)',cross_satellite:'Cross-verified across agricultural cluster'},
+            wind_corridor:{speed_kmh:14,direction:'NW',potential_corridor_km:4.5},
+            explain_classification:{
+                evidence:['Cluster of fires across open crop fields','Short-lived burning: 1-2 times','Moderate heat intensity','During harvest season'],
+                counter_evidence:['Smoke near rural road may reduce visibility']
+            },
+            assets_at_risk:[
+                {asset:'Bhawani Village School',type:'Education',population:'280 Students',distance_km:1.1,risk_tier:'HIGH (SMOKE)'},
+                {asset:'Sangrur-Patiala Road',type:'Transport',population:'Rural Traffic',distance_km:1.8,risk_tier:'MODERATE'}
+            ],
+            status_log:[
+                {status:'NEW',timestamp:'2026-09-19T07:00:00+05:30',note:'Satellite detection',actor:'SYSTEM'},
+                {status:'DISPATCHED',timestamp:'2026-09-19T09:30:00+05:30',note:'SIMULATED DISPATCH — Alert sent to Punjab Pollution Squad',actor:'GOV-CMD-001'}
+            ]
+        },
+        {
+            id:'INC-2026-0045', title:'Singrauli Unregistered Hotspot', timestamp:'11:42 IST',
+            coordinates:{lat:24.1840,lon:82.6530}, location_name:'Singrauli Scrubland, MP/UP Border',
+            classification:'SUSPICIOUS', confidence:78, risk_score:79, risk_label:'CRITICAL (NTRO CHECK)',
+            frp_mw:52.3, brightness_c:70.8, status:'NEW',
+            assigned_authority:{name:'District Magistrate & Field Task Force',jurisdiction:'Singrauli Buffer Zone',distance_km:11.2,eta_mins:30,contact_role:'Field Team Liaison'},
+            confidence_breakdown:{score:78,rating:'MODERATE',sensor_signal:'82% (Intermittent heat)',cross_satellite:'Stationary on 34 passes'},
+            wind_corridor:{speed_kmh:8,direction:'SE',potential_corridor_km:1.5},
+            explain_classification:{
+                evidence:['Heat 34 times in 60 days at fixed spot','Scrubland with zero factory permits','No environmental clearances','High heat suggests illegal furnace'],
+                counter_evidence:['Underground coal seam requires drone check']
+            },
+            assets_at_risk:[
+                {asset:'Dudhichua Forest Border',type:'Natural Resource',population:'Reserved Forest',distance_km:1.9,risk_tier:'HIGH'},
+                {asset:'Tribal Hamlet Basti',type:'Habitation',population:'320 Residents',distance_km:2.4,risk_tier:'MODERATE'}
+            ],
+            status_log:[
+                {status:'NEW',timestamp:'2026-09-19T06:00:00+05:30',note:'Initial detection — suspicious pattern',actor:'SYSTEM'}
+            ]
+        }
+    ];
+
+    const MOCK_RESPONDERS = {
+        'INC-2026-0042':[
+            {id:'UNIT-001',name:'NDRF Team Alpha',unit:'NDRF-OD-03',type:'NDRF',distance_km:14.2,eta_mins:25,status:'AVAILABLE'},
+            {id:'UNIT-002',name:'Odisha Fire Brigade',unit:'OFB-BLP-12',type:'Fire Brigade',distance_km:18.5,eta_mins:32,status:'AVAILABLE'},
+            {id:'UNIT-003',name:'District Civil Defense',unit:'DCD-MBR-04',type:'Civil Defense',distance_km:22.1,eta_mins:40,status:'EN_ROUTE_OTHER'}
+        ],
+        'INC-2026-0043':[{id:'UNIT-010',name:'GPCB Rapid Response',unit:'GPCB-JNG-01',type:'Environmental',distance_km:3.8,eta_mins:10,status:'AVAILABLE'}],
+        'INC-2026-0044':[
+            {id:'UNIT-020',name:'Punjab Pollution Squad',unit:'PPCB-SNG-03',type:'Environmental',distance_km:8.5,eta_mins:15,status:'AVAILABLE'},
+            {id:'UNIT-021',name:'District Fire Service',unit:'DFS-SNG-01',type:'Fire Brigade',distance_km:12.0,eta_mins:20,status:'AVAILABLE'}
+        ],
+        'INC-2026-0045':[{id:'UNIT-030',name:'MP Task Force',unit:'MPTF-SNG-02',type:'NDRF',distance_km:11.2,eta_mins:30,status:'AVAILABLE'}]
+    };
+
+    // ══════════════════════════════════════════════════════════════════════
+    // UTILITIES
+    // ══════════════════════════════════════════════════════════════════════
+    function toast(msg, type='info') {
+        const c = document.getElementById('toast-container');
+        const colors = {info:'bg-blue-600',success:'bg-emerald-600',error:'bg-red-600',warning:'bg-amber-600'};
+        const div = document.createElement('div');
+        div.className = `px-4 py-3 rounded-lg ${colors[type]||colors.info} text-white text-xs font-bold shadow-lg flex items-center gap-2 animate-[slideIn_0.3s_ease-out]`;
+        div.innerHTML = msg;
+        c.appendChild(div);
+        setTimeout(() => { div.style.opacity='0'; div.style.transition='opacity 0.3s'; setTimeout(()=>div.remove(),300); }, 4000);
+    }
+
+    function ts() { return new Date().toISOString().replace('T',' ').slice(0,19); }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // VIEW SWITCHING
+    // ══════════════════════════════════════════════════════════════════════
+    let currentView = 'government';
+
+    function switchView(view) {
+        currentView = view;
+        document.getElementById('view-government').classList.toggle('hidden', view !== 'government');
+        document.getElementById('view-responder').classList.toggle('hidden', view !== 'responder');
+
+        const tabs = {gov:'tab-gov',resp:'tab-resp'};
+        Object.entries(tabs).forEach(([key, id]) => {
+            const el = document.getElementById(id);
+            if (key === view) {
+                el.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200/80 dark:border-slate-700 transition-all font-bold';
+            } else {
+                el.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-semibold';
+            }
+        });
+
+        if (view === 'government') renderGovernment();
+        if (view === 'responder') renderResponder();
+    }
+
+    function setTheme(mode) {
+        const html = document.documentElement;
+        if (mode === 'dark') { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // GOVERNMENT COMMAND
+    // ══════════════════════════════════════════════════════════════════════
+    let govSelectedId = null;
+
+    function renderGovernment() {
+        // Stats
+        const active = incidents.length;
+        const critical = incidents.filter(i => i.risk_score >= 70).length;
+        const dispatched = incidents.filter(i => ['DISPATCHED','ACKNOWLEDGED','EN ROUTE','ARRIVED'].includes(i.status)).length;
+        const resolved = incidents.filter(i => ['RESOLVED','CONTAINED'].includes(i.status)).length;
+
+        document.getElementById('gov-stats').innerHTML = `
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Active Incidents</span>
+                <div class="text-3xl font-bold text-orange-600 dark:text-orange-400 font-mono">${active}</div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Critical</span>
+                <div class="text-3xl font-bold text-red-600 dark:text-red-400 font-mono">${critical}</div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Dispatched</span>
+                <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 font-mono">${dispatched}</div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Resolved</span>
+                <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">${resolved}</div>
+            </div>`;
+        document.getElementById('gov-stat-active').textContent = `${active} Active Incidents`;
+        document.getElementById('gov-incident-count').textContent = `${active} events`;
+
+        // Incident list
+        const list = document.getElementById('gov-incident-list');
+        list.innerHTML = incidents.map(inc => {
+            const sel = inc.id === govSelectedId;
+            const st = (inc.status||'NEW').toUpperCase();
+            const riskColor = inc.risk_score >= 70 ? 'text-red-400' : inc.risk_score >= 40 ? 'text-amber-400' : 'text-emerald-400';
+            return `
+            <div onclick="govSelectIncident('${inc.id}')" class="p-3 rounded-lg border text-xs cursor-pointer transition-all ${sel ? 'border-blue-500 bg-blue-50/10 dark:bg-blue-950/20 ring-1 ring-blue-500/30' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'}">
+                <div class="flex items-center justify-between">
+                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${inc.id}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ${STATUS_COLORS[st]||'bg-slate-500'}">${st}</span>
+                </div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white mt-1">${inc.title}</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">${inc.location_name}</div>
+                <div class="flex items-center justify-between mt-1.5">
+                    <span class="text-[10px] font-mono font-bold ${riskColor}">Risk: ${inc.risk_score}</span>
+                    <span class="text-slate-400 font-mono text-[10px]">${inc.classification}</span>
+                </div>
+            </div>`;
+        }).join('');
+
+        if (govSelectedId) renderGovDossier(govSelectedId);
+    }
+
+    function govSelectIncident(id) {
+        govSelectedId = id;
+        renderGovernment();
+    }
+
+    function renderGovDossier(id) {
+        const inc = incidents.find(i => i.id === id);
+        if (!inc) return;
+        const panel = document.getElementById('gov-dossier-panel');
+        const st = (inc.status||'NEW').toUpperCase();
+        const auth = inc.assigned_authority || {};
+        const wc = inc.wind_corridor || {};
+        const cb = inc.confidence_breakdown || {};
+        const ev = inc.explain_classification || {};
+        const assets = inc.assets_at_risk || [];
+        const log = inc.status_log || [];
+
+        panel.innerHTML = `
+        <!-- Dossier Header -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <span class="text-[10px] font-mono uppercase text-slate-400 block font-semibold">Incident Dossier</span>
+                    <h3 class="text-xl font-bold text-white">${inc.title}</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">${inc.location_name}</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ${STATUS_COLORS[st]||'bg-slate-500'}">${st}</span>
+                        <span class="px-2 py-0.5 rounded border text-[10px] font-bold font-mono ${inc.risk_score>=70?'bg-red-100 text-red-700 border-red-200':inc.risk_score>=40?'bg-amber-100 text-amber-700 border-amber-200':'bg-emerald-100 text-emerald-700 border-emerald-200'}">${inc.risk_label||'UNKNOWN'}</span>
+                        <span class="text-slate-400 font-mono text-[10px]">Risk: ${inc.risk_score}</span>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="govOpenAlert('${inc.id}')" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5">🚨 Generate Alert</button>
+                    <button onclick="govAcknowledge('${inc.id}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5">✓ Acknowledge</button>
+                    <button onclick="govExportPDF('${inc.id}')" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700">📄 Export PDF</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-mono">
+                <div><span class="text-[10px] text-slate-400 uppercase block">FRP</span><span class="text-sm font-bold text-white">${inc.frp_mw} MW</span></div>
+                <div><span class="text-[10px] text-slate-400 uppercase block">Confidence</span><span class="text-sm font-bold text-emerald-400">${inc.confidence}%</span></div>
+                <div><span class="text-[10px] text-slate-400 uppercase block">Classification</span><span class="text-sm font-bold text-white">${inc.classification}</span></div>
+            </div>
+            <div class="text-xs font-mono text-slate-500">📍 ${inc.coordinates.lat}°N, ${inc.coordinates.lon}°E</div>
+        </div>
+
+        <!-- AI Confidence -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+            <div class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs space-y-1.5">
+                <span class="text-[10px] text-slate-400 uppercase font-mono font-bold block">AI Confidence Breakdown</span>
+                <div class="flex items-center justify-between">
+                    <span class="font-mono text-lg font-black text-emerald-400">${inc.confidence}%</span>
+                    <span class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold font-mono text-[10px]">${cb.rating||'—'}</span>
+                </div>
+                ${cb.sensor_signal?`<div class="text-slate-300 font-mono text-[11px]">${cb.sensor_signal}</div>`:''}
+                ${cb.cross_satellite?`<div class="text-slate-400 text-[11px]">${cb.cross_satellite}</div>`:''}
+            </div>
+
+            <!-- Wind -->
+            <div class="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-[11px] font-mono text-blue-300">
+                <span class="font-bold">Surface Wind:</span> ${wc.direction} at ${wc.speed_kmh} km/h — Downwind ~${wc.potential_corridor_km} km
+            </div>
+
+            <!-- Evidence -->
+            <div class="space-y-1 text-xs">
+                <span class="text-[10px] text-slate-400 uppercase font-mono font-bold block">Classification Rationale</span>
+                ${(ev.evidence||[]).map(e=>`<div class="flex items-start gap-1.5 text-slate-300"><span class="text-emerald-400 mt-0.5">✔</span><span>${e}</span></div>`).join('')}
+                ${(ev.counter_evidence||[]).map(e=>`<div class="flex items-start gap-1.5 text-amber-400"><span class="mt-0.5">⚠</span><span>${e}</span></div>`).join('')}
+            </div>
+
+            <!-- Assets -->
+            <div class="space-y-1.5">
+                <span class="text-[10px] text-slate-400 uppercase font-mono font-bold block">Assets at Risk</span>
+                ${assets.map(a=>`
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800 last:border-0 text-xs">
+                    <div><span class="text-slate-200 font-medium">${a.asset}</span><span class="text-slate-500 ml-1 text-[10px]">${a.distance_km} km</span></div>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono ${a.risk_tier.includes('CRITICAL')?'bg-red-100 text-red-700':a.risk_tier.includes('HIGH')?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-600'}">${a.risk_tier}</span>
+                </div>`).join('')}
+            </div>
+
+            <!-- Authority -->
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div><span class="text-slate-400 block">Assigned Authority</span><span class="font-bold text-slate-200">${auth.name||'—'}</span></div>
+                <div><span class="text-slate-400 block">ETA</span><span class="font-bold font-mono text-amber-400">${auth.eta_mins||'—'} mins</span></div>
+            </div>
+        </div>
+
+        <!-- Status Timeline -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+            <span class="text-[10px] text-slate-400 uppercase font-mono font-bold block">Status History (${log.length} entries)</span>
+            <div class="space-y-0">
+                ${log.map((e,i)=>`
+                <div class="flex items-start gap-3 text-xs py-1.5 border-l-2 border-slate-200 dark:border-slate-700 pl-3 ml-1">
+                    <div class="w-2 h-2 rounded-full mt-1 -ml-[17px] shrink-0 ${STATUS_COLORS[e.status]||'bg-slate-400'}"></div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold">${e.status}</span>
+                            <span class="text-[10px] text-slate-400 font-mono">${e.timestamp}</span>
+                        </div>
+                        ${e.note?`<div class="text-slate-400 text-[11px] mt-0.5 italic">"${e.note}"</div>`:''}
+                        <div class="text-[10px] text-slate-500 mt-0.5">by ${e.actor}</div>
+                    </div>
+                </div>`).join('')}
+            </div>
+        </div>`;
+    }
+
+    // ── Alert Flow ──
+    function govOpenAlert(id) {
+        const inc = incidents.find(i => i.id === id);
+        if (!inc) return;
+        const responders = MOCK_RESPONDERS[id] || [];
+        const auth = inc.assigned_authority || {};
+        const modal = document.getElementById('alert-modal');
+        document.getElementById('alert-modal-body').innerHTML = `
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700">
+                <span class="text-2xl">⚠️</span>
+                <div>
+                    <div class="font-black text-amber-800 dark:text-amber-200 uppercase tracking-wider text-sm">SIMULATED DISPATCH</div>
+                    <div class="text-[11px] text-amber-600 dark:text-amber-400">This is a training/simulation alert. It will NOT reach any real government system.</div>
+                </div>
+            </div>
+            <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs space-y-2">
+                <div class="flex items-center justify-between font-bold text-white"><span class="font-mono">${inc.id}</span><span class="font-mono text-[10px] uppercase">${inc.status||'NEW'}</span></div>
+                <div class="text-sm font-bold">${inc.title}</div>
+                <div class="text-slate-400">${inc.location_name}</div>
+                <div class="grid grid-cols-2 gap-2 mt-2 font-mono">
+                    <div><span class="text-[10px] text-slate-400">Authority</span><div class="font-bold">${auth.name||'Unassigned'}</div></div>
+                    <div><span class="text-[10px] text-slate-400">ETA</span><div class="font-bold">${auth.eta_mins||'—'} mins</div></div>
+                </div>
+            </div>
+            ${responders.length?`
+            <div class="space-y-1.5">
+                <span class="text-[10px] text-slate-400 uppercase font-mono font-bold">Nearest Responders</span>
+                ${responders.map(r=>`
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs">
+                    <div><span class="font-bold text-slate-200">${r.name}</span><span class="text-slate-400 ml-2">${r.unit}</span></div>
+                    <div class="flex items-center gap-2"><span class="font-mono text-blue-400">${r.distance_km} km</span><span class="font-mono text-slate-400">ETA ${r.eta_mins}m</span></div>
+                </div>`).join('')}
+            </div>`:''}
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeAlertModal()" class="flex-1 px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+                <button onclick="govConfirmAlert('${inc.id}')" class="flex-1 px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2">🚨 Confirm Simulated Alert</button>
+            </div>`;
+        modal.classList.remove('hidden');
+    }
+
+    function closeAlertModal() { document.getElementById('alert-modal').classList.add('hidden'); }
+
+    function govConfirmAlert(id) {
+        const inc = incidents.find(i => i.id === id);
+        if (!inc) return;
+
+        // Validate transition
+        const allowed = VALID_TRANSITIONS[inc.status] || [];
+        if (!allowed.includes('DISPATCHED') && inc.status !== 'DISPATCHED') {
+            // For alert, we allow from NEW/INVESTIGATING/VERIFIED/DISPATCHED
+            const alertAllowed = ['NEW','INVESTIGATING','VERIFIED','DISPATCHED'];
+            if (!alertAllowed.includes(inc.status)) {
+                toast(`❌ Cannot send alert from status ${inc.status}`, 'error');
+                closeAlertModal();
+                return;
+            }
+        }
+
+        // Apply transition
+        const oldStatus = inc.status;
+        inc.status = 'DISPATCHED';
+        inc.status_log.push({status:'DISPATCHED',timestamp:ts(),note:'SIMULATED DISPATCH — Alert sent (training exercise)',actor:'GOV-CMD-001'});
+
+        closeAlertModal();
+        toast(`✅ SIMULATED DISPATCH — Alert sent to ${inc.assigned_authority?.name||'authority'}`, 'success');
+        renderGovernment();
+    }
+
+    function govAcknowledge(id) {
+        const inc = incidents.find(i => i.id === id);
+        if (!inc) return;
+        const allowed = VALID_TRANSITIONS[inc.status] || [];
+        if (!allowed.includes('INVESTIGATING')) {
+            toast(`❌ Invalid transition: ${inc.status} → INVESTIGATING. Allowed: [${allowed.join(', ')}]`, 'error');
+            return;
+        }
+        inc.status = 'INVESTIGATING';
+        inc.status_log.push({status:'INVESTIGATING',timestamp:ts(),note:'Government command acknowledged',actor:'GOV-CMD-001'});
+        toast(`✅ Incident acknowledged — status: INVESTIGATING`, 'success');
+        renderGovernment();
+    }
+
+    function govExportPDF(id) {
+        const inc = incidents.find(i => i.id === id);
+        if (!inc) return;
+        const now = new Date().toISOString().slice(0,10);
+        toast(`📄 PDF Export: ${id}_Dossier_${now}.pdf generated`, 'info');
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // RESPONDER OPERATIONS
+    // ══════════════════════════════════════════════════════════════════════
+    let respSelectedId = null;
+    let respGroundNote = '';
+
+    const RESPONDER_FLOW = [
+        {key:'DISPATCHED',label:'Dispatched',icon:'📤',next:'ACKNOWLEDGED',actionLabel:'🫡 ACKNOWLEDGE DISPATCH',actionClass:'bg-amber-500 hover:bg-amber-600'},
+        {key:'ACKNOWLEDGED',label:'Acknowledged',icon:'✓',next:'EN ROUTE',actionLabel:'🚒 MARK EN ROUTE',actionClass:'bg-blue-600 hover:bg-blue-700'},
+        {key:'EN ROUTE',label:'En Route',icon:'🚗',next:'ARRIVED',actionLabel:'📍 CONFIRM ARRIVED',actionClass:'bg-orange-600 hover:bg-orange-700'},
+        {key:'ARRIVED',label:'Arrived',icon:'📍',next:'CONTAINED',actionLabel:'🧯 REPORT CONTAINED',actionClass:'bg-red-600 hover:bg-red-700'},
+        {key:'CONTAINED',label:'Contained',icon:'🛡️',next:'RESOLVED',actionLabel:'✅ MARK RESOLVED',actionClass:'bg-emerald-600 hover:bg-emerald-700'},
+        {key:'RESOLVED',label:'Resolved',icon:'✅',next:null,actionLabel:'MISSION COMPLETE',actionClass:'bg-emerald-700'}
+    ];
+
+    function renderResponder() {
+        const select = document.getElementById('resp-incident-select');
+        select.innerHTML = incidents.map(i =>
+            `<option value="${i.id}" ${i.id===respSelectedId?'selected':''}>${i.id} • ${i.location_name} (${i.status})</option>`
+        ).join('');
+        if (!respSelectedId && incidents.length) respSelectIncident(incidents[0].id);
+        else if (respSelectedId) respRenderDetail(respSelectedId);
+    }
+
+    function respSelectIncident(id) {
+        respSelectedId = id;
+        respGroundNote = '';
+        respRenderDetail(id);
+    }
+
+    function respRenderDetail(id) {
+        const inc = incidents.find(i => i.id === id);
+        if (!inc) return;
+        const auth = inc.assigned_authority || {};
+        const wc = inc.wind_corridor || {};
+
+        // Tactical card
+        document.getElementById('resp-tactical-card').innerHTML = `
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div>
+                    <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold block">Assigned Mission</span>
+                    <h3 class="text-xl font-black text-white">${inc.title}</h3>
+                    <p class="text-xs text-slate-400">${inc.location_name}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-1 rounded-md bg-red-100 dark:bg-red-950/70 border border-red-200 dark:border-red-900 text-red-400 text-xs font-bold font-mono">${inc.classification}</span>
+                    <span class="px-2.5 py-1 rounded-md text-white text-xs font-black font-mono ${inc.risk_score>=70?'bg-red-600':inc.risk_score>=40?'bg-amber-600':'bg-emerald-600'}">${inc.risk_score>=70?'CRITICAL':inc.risk_score>=40?'HIGH':'MODERATE'}</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+                    <span class="text-[10px] uppercase font-mono text-slate-400 font-bold block">Target GPS</span>
+                    <div class="text-sm font-black font-mono text-white mt-0.5">${inc.coordinates.lat}°N • ${inc.coordinates.lon}°E</div>
+                </div>
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+                    <span class="text-[10px] uppercase font-mono text-slate-400 font-bold block">Thermal Power</span>
+                    <div class="text-sm font-black font-mono text-orange-400 mt-0.5">${inc.frp_mw} MW</div>
+                </div>
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+                    <span class="text-[10px] uppercase font-mono text-slate-400 font-bold block">Hazard Rating</span>
+                    <div class="text-sm font-black font-mono text-red-400 mt-0.5">Risk ${inc.risk_score}/100</div>
+                </div>
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+                    <span class="text-[10px] uppercase font-mono text-slate-400 font-bold block">Surface Wind</span>
+                    <div class="text-sm font-black font-mono text-blue-400 mt-0.5">${wc.direction||'NE'} at ${wc.speed_kmh||20} km/h</div>
+                </div>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400">Assigned: <strong class="text-slate-200">${auth.name}</strong></span>
+                    <span class="font-mono text-blue-400">ETA ${auth.eta_mins} min</span>
+                </div>
+            </div>`;
+
+        // State machine
+        respRenderStateMachine(inc);
+        respRenderStatusHistory(inc);
+    }
+
+    function respRenderStateMachine(inc) {
+        const el = document.getElementById('resp-state-machine');
+        let curStatus = (inc.status||'DISPATCHED').toUpperCase();
+        if (['NEW','INVESTIGATING','VERIFIED'].includes(curStatus)) curStatus = 'DISPATCHED';
+
+        const curIdx = RESPONDER_FLOW.findIndex(s => s.key === curStatus);
+        const safeIdx = curIdx >= 0 ? curIdx : 0;
+
+        const stepsHtml = RESPONDER_FLOW.map((s, idx) => {
+            const isPast = idx < safeIdx;
+            const isCurrent = idx === safeIdx;
+            let bg = 'bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700';
+            if (isPast) bg = 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold';
+            if (isCurrent) bg = 'bg-orange-500 text-white font-black shadow-sm ring-2 ring-orange-500/30';
+            return `<div class="p-2 rounded-lg text-center ${bg} transition-all">
+                <div class="text-[10px] uppercase font-bold tracking-wider">${isPast?'✓ ':''}${s.label}</div>
+                <div class="text-[9px] mt-0.5 opacity-80">${isCurrent?'ACTIVE NOW':isPast?'COMPLETED':'PENDING'}</div>
+            </div>`;
+        }).join('');
+
+        const stepObj = RESPONDER_FLOW[safeIdx];
+        let actionHtml = '';
+        if (stepObj && stepObj.next) {
+            const allowed = VALID_TRANSITIONS[inc.status] || [];
+            const canAdvance = allowed.includes(stepObj.next);
+            actionHtml = `
+                <div class="space-y-2">
+                    <div class="text-[11px] font-mono text-slate-500 flex items-center justify-between">
+                        <span>Action Required:</span>
+                        <span>Next State → <strong>${stepObj.next}</strong></span>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] text-slate-400 uppercase font-mono font-bold block">Ground Verification Note (optional)</label>
+                        <textarea id="resp-ground-note" rows="2" placeholder="Fire perimeter status, wind conditions, evacuation..." class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 outline-none"></textarea>
+                    </div>
+                    ${canAdvance ? `
+                    <button onclick="respAdvance('${inc.id}','${stepObj.next}')" class="w-full py-4 px-6 rounded-xl ${stepObj.actionClass} text-white font-black text-sm tracking-wider uppercase shadow-lg transition-transform active:scale-[0.98] flex items-center justify-center gap-2">
+                        <span>${stepObj.actionLabel}</span> <span>→</span>
+                    </button>` : `
+                    <div class="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs text-red-400 font-mono">
+                        ❌ Invalid transition from ${inc.status}. Not allowed by backend transition table.
+                    </div>`}
+                </div>`;
+        } else {
+            actionHtml = `
+                <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-200 text-center space-y-1">
+                    <div class="font-black text-sm uppercase tracking-wider flex items-center justify-center gap-1.5">✅ Mission Complete</div>
+                    <p class="text-xs text-slate-400">All fire perimeters sealed. Site handed over to state post-disaster authorities.</p>
+                </div>`;
+        }
+
+        el.innerHTML = `
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 text-xs">
+                <div>
+                    <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold block">Lifecycle Control</span>
+                    <h4 class="text-sm font-bold text-white">Field Status Progression</h4>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-mono text-slate-500">Current:</span>
+                    <span class="px-2.5 py-0.5 rounded text-xs font-mono font-bold text-white ${STATUS_COLORS[curStatus]||'bg-slate-500'}">${curStatus}</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-center text-xs font-mono">${stepsHtml}</div>
+            ${actionHtml}
+            <div class="text-[10px] text-slate-400 font-mono text-center">Transitions validated against backend state machine. Invalid moves return HTTP 409.</div>`;
+    }
+
+    function respAdvance(id, targetStatus) {
+        const inc = incidents.find(i => i.id === id);
+        if (!inc) return;
+
+        const noteEl = document.getElementById('resp-ground-note');
+        const note = noteEl ? noteEl.value.trim() : '';
+
+        // Client-side validation
+        const allowed = VALID_TRANSITIONS[inc.status] || [];
+        if (!allowed.includes(targetStatus)) {
+            toast(`❌ Invalid transition: ${inc.status} → ${targetStatus}. Allowed: [${allowed.join(', ')}]`, 'error');
+            return;
+        }
+
+        // Apply transition
+        const oldStatus = inc.status;
+        inc.status = targetStatus;
+        inc.status_log.push({status:targetStatus,timestamp:ts(),note:note||`Unit transitioned from ${oldStatus}`,actor:'UNIT-001'});
+
+        toast(`✅ Status updated: ${oldStatus} → ${targetStatus}${note?' (note attached)':''}`, 'success');
+        respRenderDetail(id);
+
+        // If government view is visible, refresh it
+        if (currentView === 'government') renderGovernment();
+    }
+
+    function respRenderStatusHistory(inc) {
+        const el = document.getElementById('resp-status-history');
+        const log = inc.status_log || [];
+        el.innerHTML = `
+            <span class="text-[10px] text-slate-400 uppercase font-mono font-bold block">Status History (${log.length} entries)</span>
+            <div class="space-y-0">
+                ${log.map((e,i)=>`
+                <div class="flex items-start gap-3 text-xs py-1.5 border-l-2 border-slate-200 dark:border-slate-700 pl-3 ml-1">
+                    <div class="w-2 h-2 rounded-full mt-1 -ml-[17px] shrink-0 ${STATUS_COLORS[e.status]||'bg-slate-400'}"></div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold">${e.status}</span>
+                            <span class="text-[10px] text-slate-400 font-mono">${e.timestamp}</span>
+                        </div>
+                        ${e.note?`<div class="text-slate-400 text-[11px] mt-0.5 italic">"${e.note}"</div>`:''}
+                        <div class="text-[10px] text-slate-500 mt-0.5">by ${e.actor}</div>
+                    </div>
+                </div>`).join('')}
+            </div>`;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // INIT
+    // ══════════════════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+        govSelectIncident(incidents[0].id);
+        renderGovernment();
+        lucide.createIcons();
+    });
+    </script>
+</body>
+</html>

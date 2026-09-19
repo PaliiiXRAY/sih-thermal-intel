@@ -1,7 +1,7 @@
 """
 Lightweight Server-Side Persistence (SIH26162)
 Survives warm-instance restarts and keeps data out of the browser:
-incident state transitions and citizen reports are stored as JSON on disk.
+incident state transitions, status logs, and citizen reports are stored as JSON.
 On Vercel serverless the writable path is /tmp (per-instance, warm-reuse);
 locally it is ./data (fully persistent). Production would swap this module
 for PostGIS / a managed DB behind the same API contract.
@@ -16,6 +16,7 @@ STORAGE_DIR = os.environ.get("AEROTHERMAL_DATA_DIR") or (
 )
 
 INCIDENT_STATE_FILE = os.path.join(STORAGE_DIR, "incident_state.json")
+STATUS_LOG_FILE = os.path.join(STORAGE_DIR, "status_log.json")
 REPORTS_FILE = os.path.join(STORAGE_DIR, "citizen_reports.json")
 
 
@@ -39,7 +40,7 @@ def _save(path, data):
         return False
 
 
-# ---- Incident state (status transitions survive restarts) ----
+# ── Incident state (status transitions survive restarts) ──
 
 def load_incident_overrides():
     return _load(INCIDENT_STATE_FILE, {})
@@ -51,7 +52,36 @@ def save_incident_status(incident_id, status):
     return _save(INCIDENT_STATE_FILE, state)
 
 
-# ---- Citizen reports (server-side, cross-portal) ----
+# ── Status Log (chronological transition history) ──
+
+def get_status_log(incident_id):
+    """Return the status log for a specific incident."""
+    all_logs = _load(STATUS_LOG_FILE, {})
+    return all_logs.get(incident_id, [])
+
+
+def append_status_log(incident_id, status, note="", actor="SYSTEM"):
+    """Append a status transition entry to the log."""
+    from datetime import datetime, timezone
+    all_logs = _load(STATUS_LOG_FILE, {})
+    if incident_id not in all_logs:
+        all_logs[incident_id] = []
+
+    entry = {
+        "status": status,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "note": note,
+        "actor": actor,
+    }
+    all_logs[incident_id].append(entry)
+
+    # Keep last 50 entries per incident
+    all_logs[incident_id] = all_logs[incident_id][-50:]
+
+    return _save(STATUS_LOG_FILE, all_logs)
+
+
+# ── Citizen reports (server-side, cross-portal) ──
 
 def get_reports():
     return _load(REPORTS_FILE, [])

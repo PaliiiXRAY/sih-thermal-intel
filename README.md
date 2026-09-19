@@ -1,11 +1,13 @@
-# 🔥 FireSense (AeroThermal) | SIH26162 (NTRO)
-### Spaceborne Thermal Intelligence & Autonomous Industrial Disaster Response
+# 🔥 FireSense | SIH26162 (NTRO)
+### Spaceborne Thermal Anomaly Intelligence & Autonomous Disaster Response
 
 [![Production Live](https://img.shields.io/badge/Production-Live-emerald?style=flat-square&logo=vercel)](https://sih-thermal-intel.vercel.app)
 [![Problem Statement](https://img.shields.io/badge/SIH-SIH26162-orange?style=flat-square)](https://sih-thermal-intel.vercel.app)
 [![Agency](https://img.shields.io/badge/Agency-NTRO-blue?style=flat-square)](https://sih-thermal-intel.vercel.app)
-[![Data Source](https://img.shields.io/badge/Satellite-NASA%20FIRMS%20VIIRS%20375m-red?style=flat-square)](https://firms.modaps.eosdis.nasa.gov/)
-[![Python](https://img.shields.io/badge/Backend-Python%203.10+-3776ab?style=flat-square&logo=python)](https://python.org)
+[![Satellite Data](https://img.shields.io/badge/Satellite-NASA%20FIRMS%20VIIRS%20375m-red?style=flat-square)](https://firms.modaps.eosdis.nasa.gov/)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL%20%2B%20PostGIS-336791?style=flat-square&logo=postgresql)](https://postgis.net)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20REST-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Tests](https://img.shields.io/badge/Tests-119%20Passing-success?style=flat-square)](https://docs.pytest.org)
 
 > **Live Production Platform:** [https://sih-thermal-intel.vercel.app](https://sih-thermal-intel.vercel.app)  
 > **Tactical Operations Dashboard:** [https://sih-thermal-intel.vercel.app/app](https://sih-thermal-intel.vercel.app/app)  
@@ -19,156 +21,190 @@
 
 NASA earth-observation satellites (**Suomi NPP / NOAA-20 VIIRS 375m** and **Terra/Aqua MODIS 1km**) register thousands of thermal infrared anomalies across the Indian subcontinent daily. However, spaceborne sensors only transmit raw thermal flux pixels (brightness temperature and Fire Radiative Power in MW). 
 
-**The Challenge:** Spaceborne sensors cannot inherently tell whether a thermal spike is a scheduled, safe gas flare in an oil refinery (burning at 600°C–1000°C), an uncontrolled catastrophic explosion, agricultural crop burning, or an **unregistered clandestine thermal anomaly** operating outside regulatory oversight.
+**The Challenge:** Spaceborne sensors cannot inherently tell whether a thermal spike is a routine, licensed gas flare in an oil refinery (burning at 600°C–1000°C), an uncontrolled explosion, agricultural stubble burning, or an **unregistered clandestine thermal anomaly** operating outside regulatory cadastre.
 
-**FireSense bridges this gap:**
-> **SATELLITE SIGNAL ⟶ MULTI-MODEL CLASSIFICATION ⟶ ASSETS AT RISK ⟶ EMERGENCY DISPATCH**
+**FireSense converts raw satellite detections into action:**
+$$\text{Detection} \longrightarrow \text{Classification} \longrightarrow \text{Contextualization} \longrightarrow \text{Prioritization} \longrightarrow \text{Simulated Alert} \longrightarrow \text{Tactical Tracking}$$
 
-FireSense correlates raw satellite thermal pixels with **OpenStreetMap (OSM) vector boundaries**, **ESA WorldCover land-cover matrices**, and a **60-day historical overpass persistence baseline**. It computes composite danger scores, simulates physical blast/evacuation perimeters, routes automated Common Alerting Protocol (CAP) dispatches to nearest fire stations, and coordinates civilian evacuation routes.
+FireSense correlates spaceborne thermal anomalies with **PostgreSQL/PostGIS geospatial databases**, **OpenStreetMap (OSM) cadastres**, and **temporal cell persistence baselines**. It computes transparent danger scores, enriches events with nearby critical infrastructure, triggers simulated alerts to recommended emergency units, and tracks field operations through an immutable audit trail.
 
 ---
 
-## 🏛️ System Architecture & Data Pipeline
+## 🏛️ System Architecture & Data Flow
 
 ```text
                                   [DATA SOURCES]
                  NASA FIRMS (VIIRS 375m / MODIS)  +  OSM Overpass API
                                          │
                                          ▼
-                             [INGESTION & SPATIAL ENGINE]
-                 • Coordinate Projection & Bounding Box Filtering
-                 • 60-Day Temporal Cell Persistence Engine
-                 • ESA WorldCover 10m Land-Cover Masking
+                            [POSTGIS GEOSPATIAL ENGINE]
+                 • PostGIS SRID 4326 R-Tree / GiST Geodesic Proximity
+                 • Temporal Persistence Cell Baseline (60-Day Lookback)
+                 • Critical Infrastructure Correlator (Plants, Schools, Reserves)
                                          │
                                          ▼
-                             [AI CLASSIFICATION ENGINE]
-                 • Multi-Feature Thermal Classifier (FRP, Temp, Day/Night)
-                 • Facility Geofence Intersection (Refineries, Plants, Mines)
-                 • Classifies: Flare vs Runaway Fire vs Stubble vs Wildfire vs Clandestine
+                       [AI CLASSIFICATION & SAFETY FALLBACK]
+                 • XGBoost Decision Tree Classifier (FRP, Temp, Day/Night)
+                 • Deterministic Expert Rule Fallback Layer
+                 • Classes: Industrial Fire, Gas Flare, Wildfire, Crop Burning, Unknown
                                          │
                                          ▼
-                            [RISK & INCIDENT STATE MACHINE]
-                 • Composite Danger Score (0 - 100)
-                 • Blast Radius & Evacuation Perimeters (500m / 1.5km / 3km)
-                 • Incident Lifecycle: NEW → VERIFIED → DISPATCHED → CONTAINED → RESOLVED
+                          [TRANSPARENT RISK ENGINE (0-100)]
+                 • 0.30 Severity + 0.25 Persistence + 0.20 Exposure
+                   + 0.15 Infrastructure + 0.10 Growth Proxy
                                          │
-                 ┌───────────────────────┴───────────────────────┐
-                 ▼                                               ▼
-    [TACTICAL COMMAND CONSOLE]                      [PUBLIC SAFETY & ADVISORY]
-    (Control Room & First Responders)               (Civilian Transparency)
-    • High-Density Interactive Map                  • Real-Time Incident Bulletins
-    • Telemetry Dossiers & FRP Charts               • Geofenced Evacuation Routes
-    • One-Click Emergency Station Dispatch          • Crowdsourced Smoke Verification
-    • PDF Executive & GeoJSON GIS Export            • Designated Emergency Shelters
+                                         ▼
+                 [CANONICAL STATE MACHINE & AUDIT LOGGING]
+                 • Append-Only Immutable Audit Trail (IncidentLog)
+                 • Strict Canonical Lifecycle State Machine
+                                         │
+                 ┌───────────────────────┼───────────────────────┐
+                 ▼                       ▼                       ▼
+      [NTRO INTELLIGENCE]     [GOVERNMENT COMMAND]    [FIRST RESPONDER]
+      • Anomaly Telemetry     • Situational Map       • Tactical Queue
+      • Evidence Dossier      • Simulated Dispatch    • En Route / Arrive
+      • ML Re-Classification  • District Directives   • Contain / Resolve
+                                         │
+                                         ▼
+                            [PUBLIC SAFETY ADVISORY]
+                            • Simulated Bulletins (No PII)
+                            • Designated Safe Shelters
+                            • Crowdsourced Smoke Verification
 ```
 
 ---
 
-## 🧱 The 6-Module Operational Breakdown
+## 🔄 Canonical Incident Lifecycle State Machine
 
-| Module | Name | Function & Deliverables |
-| :--- | :--- | :--- |
-| **01** | **DETECT** | Ingests NASA FIRMS VIIRS 375m active fire telemetry (Fire Radiative Power, Brightness Temperature, Acquisition Timestamp, Scan Angle). |
-| **02** | **CLASSIFY** | Multi-feature heuristics distinguish Industrial Gas Flares, Thermal Plants, Coal Stockyard Fires, Stubble Burns, Wildfires, and Unregistered Clandestine Operations with an explicit explainability evidence panel. |
-| **03** | **CONTEXTUALIZE** | Cross-references spatial coordinates with OpenStreetMap vector boundaries and computes a 60-day historical recurrence baseline for that specific 375m cell. |
-| **04** | **ASSESS** | Calculates a 0–100 Composite Danger Score, generates Assets-at-Risk dossiers (population centers, highways, hospitals), and simulates wind-driven smoke/evacuation plumes. |
-| **05** | **RESPOND** | Generates authoritative Incident Tickets (`#INC-2026-0042`) and triggers simulated encrypted dispatches to nearest emergency authorities (e.g., Jamnagar Disaster Control, Baripada Fire Station). |
-| **06** | **TRACK & FEEDBACK** | Dual-view operations: Control Room Commander overview and First Responder Mobile Field Terminal (`Acknowledge` → `En Route` → `Arrived` → `Contained` → `Resolved`). |
+The platform strictly enforces the canonical lifecycle contract across all API endpoints and dashboards:
+
+```text
+   DETECTED
+      ↓
+  CLASSIFIED
+      ↓
+   ASSESSED
+      ↓
+   ALERTED
+      ↓
+ ACKNOWLEDGED  ─────────┐ (Direct Shortcut)
+      ↓                 │
+   EN_ROUTE             │
+      ↓                 │
+   ARRIVED              │
+      ↓                 │
+  CONTAINED             │
+      ↓                 │
+   RESOLVED  ◄──────────┘
+```
+
+- **Alerting is Side-Effect Free:** Dispatching a simulated alert does not silently mutate incident status.
+- **Strict Status Validation:** Transitions are managed exclusively via `PATCH /api/incidents/{id}/status`.
+- **Forbidden Statuses:** `DISPATCHED`, `RESPONDING`, and `MITIGATED` are rejected by validation.
 
 ---
 
-## ⚡ Pre-Cached Operational Indian Scenarios
+## ⚖️ Transparent Priority Risk Engine
 
-FireSense includes pre-cached real-world operational scenarios for live demonstrations without requiring active satellite flyover timing:
+The Risk Score is an operational **prioritization score (0–100)** and **explicitly NOT a ground fire probability**:
 
-1. **Jamnagar Refinery Complex (Gujarat):** Normal high-FRP industrial flare stack verified against licensed petrochemical polygon vs runaway storage tank fire.
-2. **Similipal Biosphere Reserve (Odisha):** Rapidly expanding forest canopy wildfire encroaching on tribal settlements and wildlife corridors.
-3. **Angul Super Thermal Power Plant (Odisha):** Coal stockyard spontaneous combustion event adjacent to residential worker quarters.
-4. **Sangrur Agricultural Belt (Punjab):** Post-monsoon seasonal stubble burning cluster with air quality impact modeling.
-5. **Clandestine Thermal Anomaly (Mineral Belt):** High-heat anomaly with zero industrial registration in dense forest cover, flagged for tactical investigation.
+$$\text{Priority Score} = 0.30 \times S + 0.25 \times P + 0.20 \times E + 0.15 \times I + 0.10 \times G$$
+
+1. **Severity ($S$, 30%):** Fire Radiative Power (MW) and brightness temperature differential.
+2. **Persistence ($P$, 25%):** Temporal repetition count over historical satellite overpasses.
+3. **Exposure ($E$, 20%):** Estimated population settlement proximity and density.
+4. **Infrastructure ($I$, 15%):** PostGIS geodesic proximity (`ST_DWithin`) to high-value assets (power plants, fuel depots, substations).
+5. **Growth Proxy ($G$, 10%):** Multi-pass spatial bounding box expansion rate (proxy, not CFD fire-spread prediction).
+
+---
+
+## ⚡ 5 Curated Offline Demonstration Scenarios
+
+Pre-cached in PostgreSQL for 100% reliable hackathon presentation without external NASA API dependence:
+
+1. **Angul Thermal Power Station (`industrial_fire`):** Coal stockyard spontaneous combustion event with critical infrastructure downwind threat corridor.
+2. **Jamnagar Petrochemical Complex (`gas_flare`):** Stationary industrial flare stack verified against licensed petrochemical cadastre (94% persistence).
+3. **Similipal Biosphere Reserve (`wildfire`):** Episodic forest canopy wildfire perimeter encroaching toward tribal settlements.
+4. **Sangrur Agricultural District (`crop_burning`):** Seasonal stubble burning cluster with transient persistence (<15%).
+5. **Singrauli Hinterland Belt (`unknown`):** High-heat anomaly with zero registered industrial zoning in scrubland, flagged for tactical NTRO investigation.
+
+---
+
+## 🔐 Role-Based Access Control (RBAC) Matrix
+
+| Endpoint | Method | Analyst | Authority | Responder | Admin | Public |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| `/auth/login` | POST | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `/auth/me` | GET | ✓ | ✓ | ✓ | ✓ | ✗ (401) |
+| `/api/incidents/{id}/classify` | POST | ✓ | ✓ | ✗ (403) | ✓ | ✗ (401) |
+| `/api/incidents/{id}/context` | GET | ✓ | ✓ | ✓ | ✓ | ✗ (401) |
+| `/api/incidents/{id}/risk` | GET | ✓ | ✓ | ✓ | ✓ | ✗ (401) |
+| `/api/incidents/{id}/alert` | POST | ✗ (403) | ✓ | ✗ (403) | ✓ | ✗ (401) |
+| `/api/incidents/{id}/status` | PATCH | ✗ (403) | ✓ | ✓ | ✓ | ✗ (401) |
+| `/api/incidents/{id}/timeline` | GET | ✓ | ✓ | ✓ | ✓ | ✗ (401) |
+| `/public/alerts` | GET | ✓ | ✓ | ✓ | ✓ | ✓ (200) |
 
 ---
 
 ## 🚀 Quick Start (Running Locally)
 
-### Prerequisites:
-- Python 3.10 or higher
-- Any modern web browser (Edge, Chrome, Firefox, Safari)
-
-### 1. Clone the repository:
+### 1. Clone & Setup Python Virtual Environment
 ```bash
 git clone https://github.com/PaliiiXRAY/sih-thermal-intel.git
 cd sih-thermal-intel
+
+python -m venv venv
+# Windows:
+.\venv\Scripts\activate
+# Linux/macOS:
+source venv/bin/activate
+
+pip install -r requirements.txt
 ```
 
-### 2. Launch the server:
+### 2. Start PostgreSQL / PostGIS Database
 ```bash
-python app.py
+# Using Docker Compose
+docker compose up -d db
 ```
 
-### 3. Open in Browser:
-- **Cinematic Landing Page:** [http://localhost:5002](http://localhost:5002)
-- **Tactical Control Room Dashboard:** [http://localhost:5002/app](http://localhost:5002/app)
-
----
-
-## 📡 REST API Endpoints
-
-| Endpoint | Method | Description |
-| :--- | :--- | :--- |
-| `/api/pipeline/scenario?id={scenario_id}` | `GET` | Runs end-to-end pipeline on selected operational scenario (`&live_osm=1` enables live Overpass query). |
-| `/api/live?map_key={KEY}&bbox={BBOX}` | `GET` | Ingests live NASA FIRMS NRT data for a specified bounding box. |
-| `/api/stats` | `GET` | Returns aggregated metrics (active hotspots, critical alerts, resolved incidents). |
-| `/api/incident/{id}/dispatch` | `POST` | Dispatches emergency responders and transitions incident to `DISPATCHED`. |
-| `/api/incident/{id}/status` | `POST` | Advances incident state (`NEW` → `INVESTIGATING` → `VERIFIED` → `CONTAINED` → `RESOLVED`). |
-| `/api/export/geojson` | `GET` | Exports complete incident layers as GIS-ready GeoJSON FeatureCollection. |
-
----
-
-## 📁 Repository Structure
-
-```text
-sih-thermal-intel/
-├── app.py                     # Core server & REST API router (Port 5002)
-├── backend/
-│   ├── firms_loader.py        # NASA FIRMS Active Fire ingestion & parser
-│   ├── firms_api.py           # Live NASA FIRMS client (firms.modaps.eosdis.nasa.gov)
-│   ├── landcover.py           # ESA WorldCover 10m land-cover classification
-│   ├── pipeline.py            # End-to-end processing: FIRMS → OSM → Persistence → Classifier
-│   ├── osm_correlator.py      # OpenStreetMap vector facility correlator
-│   ├── persistence_engine.py  # 60-day temporal cell recurrence calculator
-│   ├── classifier.py          # AI classification heuristics & agency routing logic
-│   ├── incident_engine.py     # Incident state machine & Assets-at-Risk exposure database
-│   └── samples.py             # Pre-cached operational Indian geographic scenarios
-├── static/
-│   ├── landing.html           # Cinematic Apple/Samsung-inspired landing page
-│   ├── index.html             # High-density Tactical Command Console & Citizen Portal
-│   ├── app.js                 # Leaflet map engine, telemetry graphs, and state transitions
-│   ├── portal-modules.js      # Control room & responder interactive workflow modules
-│   └── style.css              # Theme styling & thermal signature animations
-├── presentation/
-│   ├── SIH_SLIDES.md          # 7 official PowerPoint slides content
-│   └── DEMO_SCRIPT.md         # 3-minute stage pitch script with judge defense Q&A
-├── tests/
-│   └── run_tests.py           # 27 automated test assertions
-├── requirements.txt           # Python dependencies (for serverless deployments)
-└── vercel.json                # Vercel production edge deployment configuration
-```
-
----
-
-## 🧪 Automated Testing
-
-Run the built-in test suite covering classification heuristics, persistence calculations, parser integrity, and API schemas:
+### 3. Verify Migrations & Seed Curated Scenarios
 ```bash
-python tests/run_tests.py
+# Verify Alembic head (expected: a2b3c4d5e6f7)
+alembic current
+
+# Seed 5 curated scenarios with provenance metadata
+python seed_demo.py --scenario all
 ```
-*(All 27 test assertions validate zero-regression behavior).*
+
+### 4. Launch Unified Application Server
+```bash
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+- **Application Portal:** [http://localhost:8000/app](http://localhost:8000/app)
+- **Landing Page:** [http://localhost:8000/](http://localhost:8000/)
+- **Swagger Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+### 5. Run Automated Test Suite
+```bash
+pytest -q
+# Output: 119 passed, 0 failures, 0 skipped
+```
 
 ---
 
-## 👥 Team & Hackathon Information
+## ⚠️ Explicit Technical Limitations & Disclaimers
 
-- **Event:** Tekathon Final 24-Hour Hackathon (September 2026) / Smart India Hackathon
-- **Team:** FireSense Intel Team
-- **Deployment:** Vercel Edge Serverless ([sih-thermal-intel.vercel.app](https://sih-thermal-intel.vercel.app))
+1. **Thermal Anomaly $\neq$ Confirmed Ground Fire:** Satellite detections identify thermal radiant flux; ground ground-truth verification is mandatory before deploying life-safety assets.
+2. **Uncalibrated Confidence:** XGBoost model confidence represents internal tree margin certainty, not calibrated physical probabilities.
+3. **Prioritization Score:** Risk score represents operational urgency (0–100), NOT physical flame ignition probability.
+4. **Growth Proxy:** Growth rate is estimated from multi-pass satellite bounding box expansions, not CFD thermodynamic fire propagation modeling.
+5. **Simulated Dispatches:** All alerting is simulated (`is_simulated: true`). Real emergency dispatch requires production inter-agency MoUs.
+
+---
+
+## 📚 Documentation Links
+- **[SIH Jury Q&A Guide](docs/SIH_QA.md):** 15 deep-dive architectural and algorithmic defense answers.
+- **[Demonstration Runbook](docs/DEMO_RUNBOOK.md):** 5-minute judge walkthrough script.
+- **[Implementation Status](docs/IMPLEMENTATION_STATUS.md):** Full Phase 1–13 verification tracking.

@@ -93,6 +93,7 @@
                     <span>🏛️</span> <span>Government Command</span>
                 </button>
                 <button onclick="switchPortal('responder')" id="tab-responder" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all">
+                    <span>🚒</span> <span>First Responder</span>
                     <span>🚒</span> <span>Responder Operations</span>
                 </button>
                 <button onclick="switchPortal('citizen')" id="tab-citizen" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all">
@@ -101,8 +102,20 @@
             </nav>
         </div>
 
-        <div class="flex items-center gap-3 text-xs">
-            <!-- Simulate Satellite Pass Button (Connects the 3 portals) -->
+        <div class="flex items-center gap-2 sm:gap-3 text-xs">
+            <!-- Auth Role Selector & Status -->
+            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span id="auth-role-pill" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-blue-600 text-white">ANALYST</span>
+                <select id="auth-role-select" onchange="switchDemoRole(this.value)" class="bg-transparent text-[11px] font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-1">
+                    <option value="analyst">Analyst (analyst@firesense.org)</option>
+                    <option value="authority">Authority (authority@firesense.org)</option>
+                    <option value="responder">Responder (responder@firesense.org)</option>
+                    <option value="admin">Admin (admin@firesense.org)</option>
+                    <option value="citizen">Public Citizen (Guest)</option>
+                </select>
+            </div>
+
+            <!-- Simulate Satellite Pass Button (Connects the portals) -->
             <button onclick="triggerSatellitePass()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold border border-slate-200 dark:border-slate-700 transition-all text-xs" title="Simulate NASA FIRMS Overpass Telemetry">
                 <i data-lucide="satellite" class="w-3.5 h-3.5 text-orange-500"></i>
                 <span>Simulate Satellite Pass</span>
@@ -589,10 +602,29 @@
                 </div>
             </div>
         </div>
-        </div>
         </div><!-- /portal-command -->
 
         <!-- ========================================== -->
+        <!-- PORTAL 4: FIRST RESPONDER OPERATIONS VIEW  -->
+        <!-- ========================================== -->
+        <div id="portal-responder" class="hidden space-y-6">
+            <!-- Header Banner -->
+            <div class="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 sm:p-8">
+                <div class="relative z-10 flex flex-wrap items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="text-xs font-mono font-bold tracking-wider text-orange-600 dark:text-orange-400 uppercase">
+                            FIELD UNIT OPERATIONAL CONSOLE &bull; DISASTER TASKING
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            First Responder Deployment &amp; Tracking
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                            Canonical State Machine Progression &bull; Verified GPS &bull; Tasking Lifecycle
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/60 border border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400 text-xs font-bold font-mono">
+                        <span class="w-2 h-2 rounded-full bg-orange-500 live-pulse"></span>
+                        <span>TACTICAL STATUS</span>
         <!-- PORTAL 3: RESPONDER OPERATIONS VIEW        -->
         <!-- ========================================== -->
         <div id="portal-responder" class="hidden space-y-6">
@@ -748,6 +780,9 @@
             </div>
         </div>
 
+
+        <!-- ========================================== -->
+        <!-- PORTAL 3: CITIZEN SERVICES VIEW            -->
         <!-- ========================================== -->
         <!-- PORTAL 4: CITIZEN SERVICES VIEW            -->
         <!-- ========================================== -->
@@ -1070,6 +1105,39 @@
                     Ticket <strong>#SOS-OD-9041</strong> created. Nearest NDRF Unit 3 has been re-routed to your location.
                 </p>
                 <div class="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">ETA: 7 mins</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm pointer-events-none"></div>
+
+    <!-- Login / Auth Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="space-y-1">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">FireSense Authentication</h3>
+                <p class="text-xs text-slate-500">Sign in with system credentials for RBAC operations.</p>
+            </div>
+            <form onsubmit="handleCustomLogin(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 font-semibold mb-1">Email</label>
+                    <input id="login-email" type="email" required placeholder="analyst@firesense.org" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono">
+                </div>
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 font-semibold mb-1">Password</label>
+                    <input id="login-password" type="password" required placeholder="••••••••" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono">
+                </div>
+                <div id="login-error-msg" class="hidden p-2 rounded bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 text-[11px]"></div>
+                <button type="submit" id="btn-login-submit" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs shadow-sm">
+                    Sign In
+                </button>
+            </form>
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
+                Demo Accounts: <code>analyst@firesense.org</code>, <code>authority@...</code>, <code>responder@...</code> (pwd: <code>password123</code>)
             </div>
         </div>
     </div>
