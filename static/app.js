@@ -365,7 +365,7 @@ function updateNtroStatCards() {
 async function quickSeedDemo() {
     showToast('Seeding curated demonstration scenarios...', 'info');
     try {
-        await apiFetch('/api/hotspots/scenario?id=jamnagar_refinery');
+        await apiFetch('/api/pipeline/scenario?id=jamnagar_refinery');
         await loadIncidents();
         showToast('Demo scenarios seeded and ready', 'success');
     } catch (err) {
@@ -1069,7 +1069,7 @@ async function runPipelineScenario() {
     if (window.lucide) lucide.createIcons();
 
     try {
-        const fc = await apiFetch(`/api/hotspots/scenario?id=${scenarioId}&live_osm=${liveOsm}`);
+        const fc = await apiFetch(`/api/pipeline/scenario?id=${scenarioId}&live_osm=${liveOsm}`);
         lastPipelineFC = fc;
 
         pipelineLayer.clearLayers();
