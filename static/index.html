@@ -30,7 +30,66 @@
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-orange-500 selection:text-white transition-colors duration-150">
 
+<!-- AUTH GATE (Cinematic Split Screen, Role Authentication) -->
+<div id="auth-gate" class="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm flex">
+  <div class="absolute inset-0 grid lg:grid-cols-2">
+    <!-- Left Hero Art / Telemetry Panel -->
+    <div class="relative hidden lg:block overflow-hidden bg-slate-950 border-r border-white/10">
+      <div class="absolute inset-0 bg-cover bg-center opacity-60" style="background-image:url('/static/media/hero_india_night.jpg')"></div>
+      <div class="absolute inset-0" style="background:linear-gradient(115deg, rgba(10,12,16,.65) 0%, rgba(10,12,16,.3) 55%, rgba(10,12,16,.9) 100%)"></div>
+      <div class="absolute top-10 left-10 flex items-center gap-3">
+        <span class="w-3 h-3 rounded-full bg-orange-500 animate-pulse"></span>
+        <span class="font-bold text-white tracking-wider text-base uppercase font-mono">FireSense OS &bull; SIH-26162</span>
+      </div>
+      <div class="absolute bottom-12 left-12 right-12 space-y-3">
+        <div class="font-mono text-[11px] tracking-[.25em] text-orange-400 uppercase font-semibold">SUOMI NPP &middot; VIIRS DNB &middot; NASA FIRMS TELEMETRY</div>
+        <p class="text-white text-2xl font-semibold max-w-md leading-snug">Every tactical disaster response begins with a thermal anomaly detected from orbit.</p>
+        <p class="text-slate-400 text-xs font-mono">Automated incident classification &bull; Multi-tier authority command &bull; Zero-delay dispatch</p>
+      </div>
+    </div>
+    <!-- Right Interactive Authentication Form -->
+    <div class="relative bg-[#f6f5f2] dark:bg-slate-950 flex items-center justify-center p-8 sm:p-12 overflow-y-auto">
+      <div class="w-full max-w-sm">
+        <div class="flex items-center gap-2 mb-8">
+          <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+          <span class="font-bold text-slate-900 dark:text-white text-xl">FireSense</span>
+          <span class="ml-auto font-mono text-[10px] tracking-widest text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 rounded-full px-2.5 py-1 uppercase font-semibold">RBAC Gateway</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">Authorized Access</h1>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">Enter your operational console. Select a role to launch your dedicated dashboard.</p>
+        
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" for="auth-operator">Operator Identifier</label>
+        <input id="auth-operator" type="text" value="analyst@firesense.org" autocomplete="username"
+          class="w-full mb-4 px-3.5 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs sm:text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 font-mono">
+        
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" for="auth-key">Authentication Key</label>
+        <input id="auth-key" type="password" value="password123" autocomplete="current-password"
+          class="w-full mb-4 px-3.5 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs sm:text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 font-mono">
+        
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" for="auth-role">Select Dashboard Role</label>
+        <div class="relative mb-6">
+          <select id="auth-role" onchange="onAuthRoleChange(this.value)" class="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs sm:text-sm font-semibold outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 cursor-pointer">
+            <option value="analyst">Analyst — NTRO Intelligence Dashboard</option>
+            <option value="authority">Authority — Government Command Dashboard</option>
+            <option value="responder">Responder — Field Operations Terminal</option>
+            <option value="admin">Administrator — Full System Access (All Portals)</option>
+          </select>
+        </div>
 
+        <button id="auth-submit" onclick="handleAuthGateSubmit()" class="w-full py-3 rounded-lg bg-orange-600 hover:bg-orange-700 active:scale-98 text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2">
+          <span>Authenticate &amp; Launch Portal</span>
+          <span>&rarr;</span>
+        </button>
+        <p id="auth-error" class="hidden mt-3 text-xs text-red-600 dark:text-red-400 font-semibold"></p>
+        
+        <div class="mt-8 pt-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+          <span class="text-slate-500 dark:text-slate-400">Public emergency access:</span>
+          <button type="button" id="auth-citizen" onclick="handleAuthGateCitizen()" class="font-bold text-orange-600 dark:text-orange-400 hover:underline cursor-pointer">Citizen safety &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- Top Navigation Bar -->
     <header class="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur sticky top-0 z-40 px-6 py-3 flex flex-wrap items-center justify-between gap-4 shadow-sm">
@@ -69,6 +128,9 @@
                     <option value="admin">Admin (admin@firesense.org)</option>
                     <option value="citizen">Public Citizen (Guest)</option>
                 </select>
+                <button id="btn-header-login" onclick="openAuthGate()" class="px-2.5 py-1 rounded bg-orange-600 hover:bg-orange-700 text-white font-bold text-[10px] uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1" title="Open Role Authentication Gate">
+                    <span>Role Gateway</span>
+                </button>
             </div>
 
             <!-- Simulate Satellite Pass Button (Connects the portals) -->

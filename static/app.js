@@ -19,9 +19,18 @@ const Auth = {
     async init() {
         const qp = new URLSearchParams(window.location.search).get('portal');
         if (qp === 'citizen') {
+            closeAuthGate();
             await this.switchRole('citizen', false);
             return;
         }
+
+        const gatePassed = sessionStorage.getItem('firesense_auth_passed');
+        if (!gatePassed && !qp) {
+            openAuthGate();
+        } else {
+            closeAuthGate();
+        }
+
         if (this.token) {
             try {
                 const me = await this.getMe();
@@ -153,6 +162,57 @@ const Auth = {
 function switchDemoRole(role) {
     Auth.switchRole(role);
 }
+
+function openAuthGate() {
+    const gate = document.getElementById('auth-gate');
+    if (gate) gate.classList.remove('hidden');
+    const roleSel = document.getElementById('auth-role');
+    if (roleSel && Auth && Auth.role) {
+        roleSel.value = Auth.role;
+        onAuthRoleChange(Auth.role);
+    }
+}
+
+function closeAuthGate() {
+    const gate = document.getElementById('auth-gate');
+    if (gate) gate.classList.add('hidden');
+}
+
+function onAuthRoleChange(role) {
+    const op = document.getElementById('auth-operator');
+    if (!op) return;
+    const emailMap = {
+        analyst: 'analyst@firesense.org',
+        authority: 'authority@firesense.org',
+        responder: 'responder@firesense.org',
+        admin: 'admin@firesense.org',
+        citizen: 'citizen@firesense.org'
+    };
+    if (emailMap[role]) op.value = emailMap[role];
+}
+
+async function handleAuthGateSubmit() {
+    const roleSel = document.getElementById('auth-role');
+    const role = roleSel ? roleSel.value : 'analyst';
+    sessionStorage.setItem('firesense_auth_passed', '1');
+    closeAuthGate();
+    await Auth.switchRole(role);
+}
+
+async function handleAuthGateCitizen() {
+    sessionStorage.setItem('firesense_auth_passed', '1');
+    closeAuthGate();
+    await Auth.switchRole('citizen');
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const gate = document.getElementById('auth-gate');
+        if (gate && !gate.classList.contains('hidden')) {
+            handleAuthGateSubmit();
+        }
+    }
+});
 
 // Global API Fetch helper with JWT and error interception
 async function apiFetch(url, options = {}) {
