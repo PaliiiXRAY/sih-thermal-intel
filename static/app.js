@@ -100,6 +100,16 @@ const Auth = {
         }
     },
 
+    logout() {
+        this.token = null;
+        this.user = null;
+        this.role = null;
+        sessionStorage.removeItem('firesense_jwt');
+        sessionStorage.removeItem('firesense_role');
+        sessionStorage.removeItem('firesense_auth_passed');
+        window.location.href = '/';
+    },
+
     async getMe() {
         const resp = await fetch('/auth/me', {
             headers: { 'Authorization': `Bearer ${this.token}` }
@@ -122,6 +132,11 @@ const Auth = {
         }
         if (select && select.value !== this.role) {
             select.value = this.role;
+        }
+
+        const authContainer = document.getElementById('auth-role-container');
+        if (authContainer) {
+            authContainer.classList.add('hidden');
         }
 
         // Role-based encapsulation of top navigation:
@@ -881,24 +896,47 @@ function triggerSatellitePass() {
     }, 1200);
 }
 
-// Theme Switching
-function setTheme(mode) {
-    const html = document.documentElement;
-    if (mode === 'dark') html.classList.add('dark');
-    else if (mode === 'light') html.classList.remove('dark');
-    else {
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) html.classList.add('dark');
-        else html.classList.remove('dark');
-    }
-    ['light', 'dark', 'system'].forEach(m => {
-        const btn = document.getElementById(`theme-${m}`);
-        if (!btn) return;
-        if (m === mode) {
-            btn.className = "px-2 py-0.5 rounded flex items-center gap-1 bg-white dark:bg-slate-700 shadow-xs text-slate-900 dark:text-white font-semibold";
-        } else {
-            btn.className = "px-2 py-0.5 rounded flex items-center gap-1 hover:text-slate-900 dark:hover:text-white";
+// Theme Initialization & Switching
+(function initTheme() {
+    try {
+        const saved = localStorage.getItem('fs-theme');
+        const html = document.documentElement;
+        
+        let theme = saved;
+        if (!theme) {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
-    });
+        
+        if (theme === 'dark') html.classList.add('dark');
+        else html.classList.remove('dark');
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('theme-toggle');
+            if (btn) {
+                btn.innerHTML = theme === 'light' ? '\u2600' : '\u263e';
+                btn.setAttribute('title', 'Switch to ' + (theme === 'light' ? 'dark' : 'light') + ' theme');
+            }
+        });
+    } catch(e){}
+})();
+
+function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.contains('dark');
+    const next = isDark ? 'light' : 'dark';
+    
+    if (next === 'dark') {
+        html.classList.add('dark');
+    } else {
+        html.classList.remove('dark');
+    }
+    
+    const btn = document.getElementById('theme-toggle');
+    if (btn) {
+        btn.innerHTML = next === 'light' ? '\u2600' : '\u263e';
+        btn.setAttribute('title', 'Switch to ' + (next === 'light' ? 'dark' : 'light') + ' theme');
+    }
+    try { localStorage.setItem('fs-theme', next); } catch(e){}
 }
 
 // Translations for Citizen Services
