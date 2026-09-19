@@ -1,0 +1,179 @@
+import os
+import sys
+import datetime
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from geoalchemy2 import WKTElement
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.app.main import app
+from backend.app.core.config import DATABASE_URL
+from backend.app.models.incident import Incident
+
+client = TestClient(app)
+engine = create_engine(DATABASE_URL)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+@pytest.fixture(autouse=True)
+def setup_test_incident():
+    """Ensure a test incident exists in PostgreSQL for route testing, cleaned up afterward."""
+    db = TestingSessionLocal()
+    inc_id = "INC-2026-0042"
+    point_geom = WKTElement("POINT(79.0882 21.1458)", srid=4326)
+
+    # Check if exists, else insert
+    inc = db.query(Incident).filter(Incident.id == inc_id).first()
+    if not inc:
+        inc = Incident(
+            id=inc_id,
+            status="DETECTED",
+            classification="WILDFIRE",
+            classification_confidence=0.91,
+            detection_confidence="HIGH",
+            persistence_score=80.0,
+            risk_score=87.0,
+            severity="CRITICAL",
+            latitude=21.1458,
+            longitude=79.0882,
+            geometry=point_geom,
+            explanation={"evidence": ["high_frp", "forest_landcover"]},
+        )
+        db.add(inc)
+        db.commit()
+
+    yield
+
+    # Cleanup
+    try:
+        db.query(Incident).filter(Incident.id == inc_id).delete()
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+
+
+def test_health_endpoints():
+    r1 = client.get("/health")
+    assert r1.status_code == 200
+    assert r1.json() == {"status": "ok"}
+
+    r2 = client.get("/api/v2/health")
+    assert r2.status_code == 200
+    assert r2.json() == {"status": "ok", "service": "firesense-backend"}
+
+
+def test_get_incidents():
+    response = client.get("/api/v2/incidents")
+    assert response.status_code == 200
+    data = response.json()
+    assert "incidents" in data
+    assert isinstance(data["incidents"], list)
+    assert len(data["incidents"]) > 0
+
+
+def test_get_single_incident():
+    inc_id = "INC-2026-0042"
+    response = client.get(f"/api/v2/incidents/{inc_id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == inc_id
+
+    # Test non-existent incident
+    r_notfound = client.get("/api/v2/incidents/NON_EXISTENT_ID_999")
+    assert r_notfound.status_code == 404
+    assert "error" in r_notfound.json()
+
+
+def test_update_incident_status():
+    inc_id = "INC-2026-0042"
+    response = client.post(
+        f"/api/v2/incidents/{inc_id}/status",
+        json={"status": "INVESTIGATING"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["status"] == "INVESTIGATING"
+    assert data["incident_id"] == inc_id
+
+
+def test_dispatch_incident():
+    inc_id = "INC-2026-0042"
+    response = client.post(f"/api/v2/incidents/{inc_id}/dispatch")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["status"] == "ALERTED"
+
+
+def test_get_stats():
+    response = client.get("/api/v2/stats")
+    assert response.status_code == 200
+    data = response.json()
+    assert "hotspots_analyzed" in data
+    assert "critical_alerts" in data
+
+
+def test_get_reports():
+    response = client.get("/api/v2/reports")
+    assert response.status_code == 200
+    data = response.json()
+    assert "reports" in data
+    assert isinstance(data["reports"], list)
+
+
+def test_submit_and_verify_report():
+    # Submit report
+    submit_res = client.post(
+        "/api/v2/reports/submit",
+        json={
+            "location": "Test Location Ward 12",
+            "type": "Smoke plume",
+            "notes": "Test report notes"
+        }
+    )
+    assert submit_res.status_code == 200
+    res_data = submit_res.json()
+    assert res_data["success"] is True
+    report_id = res_data["report"]["id"]
+
+    # Verify report
+    verify_res = client.post(
+        "/api/v2/reports/verify",
+        json={"id": report_id}
+    )
+    assert verify_res.status_code == 200
+    verify_data = verify_res.json()
+    assert verify_data["success"] is True
+    assert verify_data["report"]["status"] == "VERIFIED"
+
+
+def test_get_hotspots_scenario():
+    response = client.get("/api/v2/hotspots/scenario?id=jamnagar_refinery&live_osm=0")
+    assert response.status_code == 200
+    geojson = response.json()
+    assert geojson.get("type") == "FeatureCollection"
+    assert "features" in geojson
+    assert len(geojson["features"]) > 0
+
+    # Verify GeoJSON properties structure remained intact
+    feat = geojson["features"][0]
+    assert "properties" in feat
+    props = feat["properties"]
+    assert "firms" in props
+    assert "osm" in props
+    assert "persistence" in props
+    assert "landcover" in props
+    assert "classification" in props
+
+
+def test_get_hotspots_live_missing_key():
+    response = client.get("/api/v2/hotspots/live")
+    assert response.status_code == 400
+    data = response.json()
+    assert "error" in data
