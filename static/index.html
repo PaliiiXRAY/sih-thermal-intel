@@ -27,6 +27,13 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="/static/style.css">
+<style>
+/* FireSense light-theme depth system: page < card < inner surface */
+html:not(.dark) body{background-color:#F3F5F7}
+html:not(.dark) .bg-slate-50{background-color:#F7F9FB}
+html:not(.dark) .bg-white{box-shadow:0 1px 2px rgba(24,33,43,.04),0 1px 3px rgba(24,33,43,.03)}
+html:not(.dark) .border-slate-200{border-color:#E4EAEF}
+</style>
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-orange-500 selection:text-white transition-colors duration-150">
 
@@ -43,8 +50,8 @@
       </div>
       <div class="absolute bottom-12 left-12 right-12 space-y-3">
         <div class="font-mono text-[11px] tracking-[.25em] text-orange-400 uppercase font-semibold">SUOMI NPP &middot; VIIRS DNB &middot; NASA FIRMS TELEMETRY</div>
-        <p class="text-white text-2xl font-semibold max-w-md leading-snug">Every tactical disaster response begins with a thermal anomaly detected from orbit.</p>
-        <p class="text-slate-400 text-xs font-mono">Automated incident classification &bull; Multi-tier authority command &bull; Zero-delay dispatch</p>
+        <p class="text-white text-2xl font-semibold max-w-md leading-snug">Every response begins with a thermal anomaly detected from orbit.</p>
+        <p class="text-slate-400 text-xs font-mono">Automated incident classification &middot; Multi-tier authority coordination &middot; Simulated dispatch</p>
       </div>
     </div>
     <!-- Right Interactive Authentication Form -->

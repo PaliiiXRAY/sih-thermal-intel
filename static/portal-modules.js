@@ -544,6 +544,27 @@ function openIncDrawer(id) {
   dw.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   lucide.createIcons();
+  // cinematic focus: map gently flies to the incident, thermal pulse marks it
+  if (typeof pipelineMap !== 'undefined' && pipelineMap && inc.coordinates) {
+    try {
+      const latlng = [inc.coordinates.lat, inc.coordinates.lon];
+      if (reducedMotionPref()) {
+        pipelineMap.setView(latlng, 10, { animate: false });
+      } else {
+        pipelineMap.flyTo(latlng, 10, { duration: 1.1 });
+      }
+      if (typeof L !== 'undefined') {
+        if (window.__incFocusMarker) pipelineMap.removeLayer(window.__incFocusMarker);
+        window.__incFocusMarker = L.circleMarker(latlng, {
+          radius: 16, color: '#f97316', weight: 2, fillColor: '#f97316', fillOpacity: 0.12, className: 'pulse-marker'
+        }).addTo(pipelineMap);
+      }
+    } catch (e) { /* map may not be initialised yet */ }
+  }
+}
+
+function reducedMotionPref() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 function closeIncDrawer() {
@@ -830,5 +851,8 @@ function submitResponderSitrep() {
     setTimeout(() => { statusEl.textContent = ''; }, 4000);
   }
 }
+
+
+
 
 
