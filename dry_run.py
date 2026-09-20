@@ -1,7 +1,18 @@
 import sys
 import os
+import json
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
+
+# Self-contained demo bootstrap for local dry runs. Users are created from this
+# env var only when the users table is empty (see backend/app/core/security.py);
+# the password below is for this dev script, never shipped as a server default.
+os.environ["FIRESENSE_BOOTSTRAP_USERS"] = json.dumps([
+    {"email": "admin@firesense.org", "password": "firesense-test-pass", "role": "admin", "full_name": "Admin User"},
+    {"email": "analyst@firesense.org", "password": "firesense-test-pass", "role": "analyst", "full_name": "Analyst User"},
+    {"email": "authority@firesense.org", "password": "firesense-test-pass", "role": "authority", "full_name": "Authority User"},
+    {"email": "responder@firesense.org", "password": "firesense-test-pass", "role": "responder", "full_name": "Responder User"},
+])
 
 from fastapi.testclient import TestClient
 from backend.app.main import app
@@ -22,7 +33,7 @@ def run_dry_run():
     print(f"Seeded incident: {incident_id}")
 
     # Admin Login to get token
-    login_resp = client.post("/auth/login", json={"email": "admin@firesense.org", "password": "password123"})
+    login_resp = client.post("/auth/login", json={"email": "admin@firesense.org", "password": "firesense-test-pass"})
     token = login_resp.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 

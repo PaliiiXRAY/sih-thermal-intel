@@ -6,6 +6,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+_MODEL_CACHE = {}
+
 def get_evidence_strings(model, features_df, incident_idx):
     """
     Generates human-readable evidence strings based on feature values
@@ -33,15 +35,22 @@ def get_evidence_strings(model, features_df, incident_idx):
 
     return evidence
 
-def explain_prediction(incident_features, model_path='ml/models/classifier.pkl'):
+def explain_prediction(incident_features, model_path=None):
     """
     Combines model prediction with evidence generation.
     """
+    import os
+    if model_path is None:
+        model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'ml', 'models', 'classifier.pkl')
+        
     try:
-        with open(model_path, 'rb') as f:
-            artifacts = pickle.load(f)
-            model = artifacts['model']
-            le = artifacts['le']
+        if model_path not in _MODEL_CACHE:
+            with open(model_path, 'rb') as f:
+                _MODEL_CACHE[model_path] = pickle.load(f)
+        
+        artifacts = _MODEL_CACHE[model_path]
+        model = artifacts['model']
+        le = artifacts['le']
     except FileNotFoundError:
         logger.error(f"Model file not found at {model_path}")
         return None

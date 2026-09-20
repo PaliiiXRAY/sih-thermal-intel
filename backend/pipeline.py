@@ -22,29 +22,28 @@ class HotspotPipeline:
     @staticmethod
     def classify_firms_rows(rows: list, use_live_osm: bool = False) -> dict:
         """Classify a list of raw FIRMS CSV rows into map-ready features."""
+        import concurrent.futures
+        
         hotspots = FIRMSLoader.parse_hotspots(rows)
-        features = []
-        for hs, raw in zip(hotspots, rows):
-            # FIRMSLoader standardizes core fields; carry the archive count through
-            hs["historical_passes"] = int(raw.get("historical_passes", 2))
 
+        def process_hotspot(hs, raw):
+            hs["historical_passes"] = int(raw.get("historical_passes", 2))
             context = raw.get("osm_context")
+            
             if use_live_osm:
                 try:
                     context = OSMCorrelator.fetch_live_context(hs["lat"], hs["lon"])
                 except Exception:
-                    pass  # fall back to cached scenario context
-
+                    pass  # fall back to cached context on failure
+            
             osm_data = OSMCorrelator.correlate_hotspot(hs["lat"], hs["lon"], context)
-            persistence = PersistenceEngine.calculate_persistence(
-                hs["id"], hs["historical_passes"])
+            persistence = PersistenceEngine.calculate_persistence(hs["id"], hs["historical_passes"])
             landcover = LandCoverResolver.resolve(osm_data)
             result = ThermalClassifier.classify(hs, osm_data, persistence)
 
-            features.append({
+            return {
                 "type": "Feature",
-                "geometry": {"type": "Point",
-                             "coordinates": [hs["lon"], hs["lat"]]},
+                "geometry": {"type": "Point", "coordinates": [hs["lon"], hs["lat"]]},
                 "properties": {
                     "id": hs["id"],
                     "firms": hs,
@@ -53,7 +52,16 @@ class HotspotPipeline:
                     "landcover": landcover,
                     "classification": result
                 }
-            })
+            }
+
+        features = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            futures = [executor.submit(process_hotspot, hs, raw) for hs, raw in zip(hotspots, rows)]
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    features.append(future.result())
+                except Exception as e:
+                    print(f"Error processing hotspot: {e}")
         return {
             "type": "FeatureCollection",
             "feature_count": len(features),

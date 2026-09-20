@@ -5,8 +5,8 @@ from backend.app.core.auth import get_current_user
 from backend.app.core.config import JWT_ACCESS_TOKEN_EXPIRE_MINUTES
 from backend.app.core.errors import unauthenticated_error
 from backend.app.core.security import (
+    bootstrap_demo_users_if_needed,
     create_access_token,
-    seed_demo_users_if_needed,
     verify_password,
 )
 from backend.app.db.session import get_db
@@ -19,8 +19,8 @@ router = APIRouter(tags=["Authentication"])
 @router.post("/auth/login", response_model=TokenResponse)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     """Authenticate user with email and password, returning a JWT token."""
-    # Ensure demo users are present if database is empty
-    seed_demo_users_if_needed(db)
+    # Bootstrap users from env-config when the database is empty (no-op otherwise)
+    bootstrap_demo_users_if_needed(db)
 
     user = db.query(User).filter(User.email == request.email).first()
     if not user or not verify_password(request.password, user.hashed_password):

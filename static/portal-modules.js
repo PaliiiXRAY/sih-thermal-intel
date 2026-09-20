@@ -71,15 +71,15 @@ async function loadIncidentTracker() {
             <div class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs space-y-2.5">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${inc.id}</span>
-                        <span class="text-slate-500 dark:text-slate-400 ml-2">${inc.classification || 'Thermal Anomaly'} &bull; ${Number(inc.latitude).toFixed(3)}&deg;N, ${Number(inc.longitude).toFixed(3)}&deg;E</span>
+                        <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${esc(inc.id)}</span>
+                        <span class="text-slate-500 dark:text-slate-400 ml-2">${esc(inc.classification || 'Thermal Anomaly')} &bull; ${Number(inc.latitude).toFixed(3)}&deg;N, ${Number(inc.longitude).toFixed(3)}&deg;E</span>
                     </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ${STATUS_COLORS[st] || 'bg-slate-500'}">${st}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ${STATUS_COLORS[st] || 'bg-slate-500'}">${esc(st)}</span>
                 </div>
                 <div class="flex gap-1">${progress}</div>
                 <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                        Risk Score: <strong class="text-slate-900 dark:text-white">${inc.risk_score != null ? Number(inc.risk_score).toFixed(1) : '–'}</strong>/100 &bull; Severity: <strong>${inc.severity || '–'}</strong>
+                        Risk Score: <strong class="text-slate-900 dark:text-white">${inc.risk_score != null ? Number(inc.risk_score).toFixed(1) : '–'}</strong>/100 &bull; Severity: <strong>${esc(inc.severity || '–')}</strong>
                     </div>
                     <div class="flex items-center gap-1.5">
                         ${alertBtn}
@@ -89,7 +89,7 @@ async function loadIncidentTracker() {
             </div>`;
         }).join('');
     } catch (err) {
-        listEl.innerHTML = `<div class="text-xs text-red-500 py-3 text-center">Failed to load incident tracker: ${err.message}</div>`;
+        listEl.innerHTML = `<div class="text-xs text-red-500 py-3 text-center">Failed to load incident tracker: ${esc(err.message)}</div>`;
     }
 }
 
@@ -227,14 +227,14 @@ async function renderCitizenReportsFeed() {
     feed.innerHTML = reports.slice(0, 8).map(r => `
         <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs space-y-1">
             <div class="flex items-center justify-between">
-                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${r.id} &bull; ${r.type}</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono ${r.status === 'VERIFIED' ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">${r.status}</span>
+                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${esc(r.id)} &bull; ${esc(r.type)}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono ${r.status === 'VERIFIED' ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">${esc(r.status)}</span>
             </div>
             <div class="text-[11px] text-slate-600 dark:text-slate-300">
-                ${r.time} &bull; ${r.location}${r.gps ? ` &bull; ${r.gps.lat}&deg;N ${r.gps.lon}&deg;E` : ''}
+                ${esc(r.time)} &bull; ${esc(r.location)}${r.gps ? ` &bull; ${esc(r.gps.lat)}&deg;N ${esc(r.gps.lon)}&deg;E` : ''}
             </div>
-            ${r.notes ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 italic">${r.notes}</div>` : ''}
-            ${r.status === 'SUBMITTED' ? `<button onclick="verifyCitizenReport('${r.id}')" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] mt-1">Cross-check with FIRMS &amp; Verify</button>` : ''}
+            ${r.notes ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 italic">${esc(r.notes)}</div>` : ''}
+            ${r.status === 'SUBMITTED' ? `<button onclick="verifyCitizenReport('${esc(r.id)}')" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] mt-1">Cross-check with FIRMS &amp; Verify</button>` : ''}
         </div>`).join('');
 }
 
@@ -282,12 +282,12 @@ async function loadPublicAlertsFeed() {
             return `
             <div class="flex items-center justify-between gap-3 p-2.5 rounded-lg border ${colorClass}">
                 <div class="flex items-center gap-2 font-medium">
-                    <span class="font-mono text-[11px] opacity-70">${timeStr}</span>
-                    <span>${a.message}</span>
+                    <span class="font-mono text-[11px] opacity-70">${esc(timeStr)}</span>
+                    <span>${esc(a.message)}</span>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
                     <span class="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">SIMULATED</span>
-                    <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold ${badgeClass}">${sev}</span>
+                    <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold ${badgeClass}">${esc(sev)}</span>
                 </div>
             </div>`;
         }).join('');
@@ -348,7 +348,7 @@ async function govAcknowledge(incId) {
   try {
     const resp = await fetch(`/api/incidents/${incId}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (Auth.token || '') },
       body: JSON.stringify({ status: 'INVESTIGATING' })
     });
     if (resp.status === 409) {
@@ -375,7 +375,7 @@ async function govSendAlert(incId) {
   try {
     const resp = await fetch(`/api/incidents/${incId}/alert`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (Auth.token || '') },
       body: JSON.stringify({ incident_id: incId, alert_type: 'SIMULATED_DISPATCH' })
     });
     if (resp.status === 409) {
@@ -395,7 +395,9 @@ async function govSendAlert(incId) {
 
 async function govExportPDF(incId) {
   try {
-    const resp = await fetch(`/api/export/${incId}/pdf`);
+    const resp = await fetch(`/api/export/${incId}/pdf`, {
+      headers: { 'Authorization': 'Bearer ' + (Auth.token || '') }
+    });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     if (data.pdf_url) {
@@ -429,12 +431,14 @@ async function loadIncidentTable() {
   const body = document.getElementById('inc-table-body');
   if (!body) return;
   try {
-    const resp = await fetch('/api/incidents');
+    const resp = await fetch('/api/incidents', {
+      headers: { 'Authorization': 'Bearer ' + (Auth.token || '') }
+    });
     const data = await resp.json();
     _incCache = Array.isArray(data.incidents) ? data.incidents : Object.values(data.incidents || {});
     renderIncidentTable();
   } catch (err) {
-    body.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-red-500 font-mono text-xs">DATA SOURCE UNAVAILABLE — ' + err.message + ' <button onclick="loadIncidentTable()" class="underline ml-2">Retry</button></td></tr>';
+    body.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-red-500 font-mono text-xs">DATA SOURCE UNAVAILABLE — ' + esc(err.message) + ' <button onclick="loadIncidentTable()" class="underline ml-2">Retry</button></td></tr>';
   }
 }
 
@@ -457,14 +461,14 @@ function renderIncidentTable() {
     return;
   }
   body.innerHTML = rows.map(inc => (
-    '<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors" onclick="openIncDrawer(\'' + inc.id + '\')">' +
-      '<td class="py-2.5 pr-3 font-mono font-bold text-slate-800 dark:text-slate-200">' + inc.id + '</td>' +
-      '<td class="py-2.5 pr-3 text-slate-600 dark:text-slate-300">' + inc.location_name + '</td>' +
-      '<td class="py-2.5 pr-3 text-slate-600 dark:text-slate-300">' + inc.classification + '</td>' +
-      '<td class="py-2.5 pr-3"><span class="font-mono font-bold ' + (inc.risk_score >= 70 ? 'text-red-600 dark:text-red-400' : inc.risk_score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400') + '">' + inc.risk_score + '</span></td>' +
-      '<td class="py-2.5 pr-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ' + (INC_STATUS_COLORS[inc.status] || 'bg-slate-500') + '">' + (inc.status || 'NEW') + '</span></td>' +
-      '<td class="py-2.5 pr-3 font-mono text-slate-600 dark:text-slate-300">' + inc.frp_mw + ' MW</td>' +
-      '<td class="py-2.5 pr-3 font-mono text-slate-600 dark:text-slate-300">' + inc.confidence + '%</td>' +
+    '<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors" onclick="openIncDrawer(\'' + esc(inc.id) + '\')">' +
+      '<td class="py-2.5 pr-3 font-mono font-bold text-slate-800 dark:text-slate-200">' + esc(inc.id) + '</td>' +
+      '<td class="py-2.5 pr-3 text-slate-600 dark:text-slate-300">' + esc(inc.location_name) + '</td>' +
+      '<td class="py-2.5 pr-3 text-slate-600 dark:text-slate-300">' + esc(inc.classification) + '</td>' +
+      '<td class="py-2.5 pr-3"><span class="font-mono font-bold ' + (inc.risk_score >= 70 ? 'text-red-600 dark:text-red-400' : inc.risk_score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400') + '">' + esc(inc.risk_score) + '</span></td>' +
+      '<td class="py-2.5 pr-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ' + (INC_STATUS_COLORS[inc.status] || 'bg-slate-500') + '">' + esc(inc.status || 'NEW') + '</span></td>' +
+      '<td class="py-2.5 pr-3 font-mono text-slate-600 dark:text-slate-300">' + esc(inc.frp_mw) + ' MW</td>' +
+      '<td class="py-2.5 pr-3 font-mono text-slate-600 dark:text-slate-300">' + esc(inc.confidence) + '%</td>' +
       '<td class="py-2.5 text-blue-600 dark:text-blue-400 font-bold whitespace-nowrap">Details →</td>' +
     '</tr>')).join('');
 }
@@ -505,40 +509,40 @@ function openIncDrawer(id) {
 
   document.getElementById('dw-body').innerHTML = (
     '<div class="flex items-center justify-between">' +
-      '<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ' + stColor + '">' + st + '</span>' +
-      '<span class="font-mono text-[11px] text-slate-400">' + inc.coordinates.lat + '°N ' + inc.coordinates.lon + '°E</span>' +
+      '<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ' + stColor + '">' + esc(st) + '</span>' +
+      '<span class="font-mono text-[11px] text-slate-400">' + esc(inc.coordinates.lat) + '°N ' + esc(inc.coordinates.lon) + '°E</span>' +
     '</div>' +
     '<div class="grid grid-cols-3 gap-2 text-center">' +
-      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">Model score</div><div class="text-xl font-black font-mono text-slate-900 dark:text-white">' + inc.confidence + '%</div></div>' +
-      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">Risk</div><div class="text-xl font-black font-mono ' + (inc.risk_score >= 70 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400') + '">' + inc.risk_score + '</div></div>' +
-      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">FRP</div><div class="text-xl font-black font-mono text-slate-900 dark:text-white">' + inc.frp_mw + '</div></div>' +
+      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">Model score</div><div class="text-xl font-black font-mono text-slate-900 dark:text-white">' + esc(inc.confidence) + '%</div></div>' +
+      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">Risk</div><div class="text-xl font-black font-mono ' + (inc.risk_score >= 70 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400') + '">' + esc(inc.risk_score) + '</div></div>' +
+      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">FRP</div><div class="text-xl font-black font-mono text-slate-900 dark:text-white">' + esc(inc.frp_mw) + '</div></div>' +
     '</div>' +
     '<div>' +
       '<div class="font-bold text-slate-800 dark:text-slate-200 mb-1.5 uppercase text-[10px] tracking-wider font-mono">Persistence · 60-day baseline</div>' +
       '<div class="tracking-widest text-sm">' + dots(Math.min(passes, 20), 20) + '</div>' +
-      '<div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">' + passes + ' observations in window · ' + (base.normal_seasonal_range || 'n/a') + ' normal · ' + (base.anomaly_ratio || '') + '</div>' +
-      '<div class="text-[11px] italic text-slate-500 dark:text-slate-400 mt-1">' + (base.verdict || '') + '</div>' +
+      '<div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">' + esc(passes) + ' observations in window · ' + esc(base.normal_seasonal_range || 'n/a') + ' normal · ' + esc(base.anomaly_ratio || '') + '</div>' +
+      '<div class="text-[11px] italic text-slate-500 dark:text-slate-400 mt-1">' + esc(base.verdict || '') + '</div>' +
     '</div>' +
     '<div>' +
       '<div class="font-bold text-slate-800 dark:text-slate-200 mb-1.5 uppercase text-[10px] tracking-wider font-mono">Why this classification</div>' +
-      ev.map(e => '<div class="text-[11px] text-slate-600 dark:text-slate-300 py-0.5">✔ ' + e + '</div>').join('') +
-      ce.map(e => '<div class="text-[11px] text-amber-600 dark:text-amber-400 py-0.5">⚠ ' + e + '</div>').join('') +
-      (cb.sensor_signal ? '<div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 font-mono">' + cb.sensor_signal + ' · ' + cb.cross_satellite + '</div>' : '') +
+      ev.map(e => '<div class="text-[11px] text-slate-600 dark:text-slate-300 py-0.5">✔ ' + esc(e) + '</div>').join('') +
+      ce.map(e => '<div class="text-[11px] text-amber-600 dark:text-amber-400 py-0.5">⚠ ' + esc(e) + '</div>').join('') +
+      (cb.sensor_signal ? '<div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 font-mono">' + esc(cb.sensor_signal) + ' · ' + esc(cb.cross_satellite) + '</div>' : '') +
     '</div>' +
     '<div>' +
       '<div class="font-bold text-slate-800 dark:text-slate-200 mb-1.5 uppercase text-[10px] tracking-wider font-mono">Assets at risk</div>' +
       (assets.map(a => '<div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800">' +
-        '<span class="text-slate-600 dark:text-slate-300">' + a.asset + '</span>' +
-        '<span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">' + a.risk_tier + '</span>' +
+        '<span class="text-slate-600 dark:text-slate-300">' + esc(a.asset) + '</span>' +
+        '<span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">' + esc(a.risk_tier) + '</span>' +
       '</div>').join('') || '<div class="text-slate-400">None listed</div>') +
     '</div>' +
     '<div class="grid grid-cols-2 gap-2">' +
-      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">Wind corridor</div><div class="font-mono text-slate-700 dark:text-slate-200">' + (wc.direction || '—') + ' · ' + (wc.speed_kmh || '—') + ' km/h</div><div class="text-[10px] text-slate-400">~' + (wc.potential_corridor_km || '—') + ' km downwind</div></div>' +
-      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">Authority</div><div class="font-mono text-slate-700 dark:text-slate-200">' + (auth.name || '—') + '</div><div class="text-[10px] text-slate-400">ETA ' + (auth.eta_mins || '—') + ' min</div></div>' +
+      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">Wind corridor</div><div class="font-mono text-slate-700 dark:text-slate-200">' + esc(wc.direction || '—') + ' · ' + esc(wc.speed_kmh || '—') + ' km/h</div><div class="text-[10px] text-slate-400">~' + esc(wc.potential_corridor_km || '—') + ' km downwind</div></div>' +
+      '<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60"><div class="text-[10px] text-slate-400 uppercase">Authority</div><div class="font-mono text-slate-700 dark:text-slate-200">' + esc(auth.name || '—') + '</div><div class="text-[10px] text-slate-400">ETA ' + esc(auth.eta_mins || '—') + ' min</div></div>' +
     '</div>' +
     '<div class="flex gap-2 pt-1">' +
-      '<button onclick="dispatchIncident(\'' + inc.id + '\')" class="flex-1 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs">Dispatch</button>' +
-      '<button onclick="advanceIncident(\'' + inc.id + '\')" class="flex-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs">Advance status</button>' +
+      '<button onclick="dispatchIncident(\'' + esc(inc.id) + '\')" class="flex-1 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs">Dispatch</button>' +
+      '<button onclick="advanceIncident(\'' + esc(inc.id) + '\')" class="flex-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs">Advance status</button>' +
     '</div>');
 
   dw.classList.remove('hidden');
@@ -578,12 +582,12 @@ async function loadDetectionFeed() {
     events.sort((a, b) => (a.t || '').localeCompare(b.t || ''));
     el.innerHTML = events.map(e => (
       '<div class="border-b border-slate-100 dark:border-slate-800 pb-1.5">' +
-        '<div class="text-slate-400">' + e.t + ' UTC</div>' +
-        e.lines.map((l, i) => '<div class="' + (i === 2 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300') + '">' + l + '</div>').join('') +
+        '<div class="text-slate-400">' + esc(e.t) + ' UTC</div>' +
+        e.lines.map((l, i) => '<div class="' + (i === 2 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300') + '">' + esc(l) + '</div>').join('') +
       '</div>')).join('');
   } catch (err) {
     el.dataset.loaded = '';
-    el.innerHTML = '<div class="text-red-500">FEED UNAVAILABLE — ' + err.message + '</div>';
+    el.innerHTML = '<div class="text-red-500">FEED UNAVAILABLE — ' + esc(err.message) + '</div>';
   }
 }
 
@@ -603,7 +607,9 @@ let _responderIncCache = {};
 async function loadResponderPortal() {
   const select = document.getElementById('resp-incident-select');
   try {
-    const resp = await fetch('/api/incidents');
+    const resp = await fetch('/api/incidents', {
+      headers: { 'Authorization': 'Bearer ' + (Auth.token || '') }
+    });
     const data = await resp.json();
     const incidents = Array.isArray(data.incidents) ? data.incidents : Object.values(data.incidents || {});
     _responderIncCache = {};
@@ -614,7 +620,7 @@ async function loadResponderPortal() {
         _activeResponderIncId = incidents[0].id;
       }
       select.innerHTML = incidents.map(i => 
-        `<option value="${i.id}" ${i.id === _activeResponderIncId ? 'selected' : ''}>${i.id} • ${i.location_name} (${i.status || 'NEW'})</option>`
+        `<option value="${esc(i.id)}" ${i.id === _activeResponderIncId ? 'selected' : ''}>${esc(i.id)} • ${esc(i.location_name)} (${esc(i.status || 'NEW')})</option>`
       ).join('');
     }
     renderResponderIncident(_activeResponderIncId);
@@ -686,12 +692,29 @@ function renderResponderStateMachine(inc) {
   if (!stepsContainer || !actionContainer) return;
 
   const curIdx = RESPONDER_FLOW.findIndex(s => s.key === curStatus);
-  const safeIdx = curIdx >= 0 ? curIdx : 0;
+
+  if (curIdx < 0) {
+    // Incident is in an early state (NEW, INVESTIGATING, VERIFIED) and not yet dispatched
+    stepsContainer.innerHTML = `
+      <div class="col-span-4 p-4 text-center text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50">
+        <i data-lucide="clock" class="w-6 h-6 mx-auto mb-2 text-slate-400"></i>
+        <div class="font-bold text-sm uppercase tracking-wider">AWAITING DISPATCH</div>
+        <div class="text-[10px] mt-1">Incident is currently in <strong>${esc(curStatus)}</strong> state. Waiting for Command Authority to dispatch.</div>
+      </div>
+    `;
+    actionContainer.innerHTML = `
+      <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center opacity-70">
+        <div class="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">No Action Available</div>
+      </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+    return;
+  }
 
   // Visual Pipeline Steps
   stepsContainer.innerHTML = RESPONDER_FLOW.map((s, idx) => {
-    const isPast = idx < safeIdx;
-    const isCurrent = idx === safeIdx;
+    const isPast = idx < curIdx;
+    const isCurrent = idx === curIdx;
     let bg = 'bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700';
     if (isPast) bg = 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold';
     if (isCurrent) bg = 'bg-orange-500 text-white font-black shadow-sm ring-2 ring-orange-500/30';
@@ -705,7 +728,7 @@ function renderResponderStateMachine(inc) {
   }).join('');
 
   // Next Valid Action Button
-  const stepObj = RESPONDER_FLOW[safeIdx];
+  const stepObj = RESPONDER_FLOW[curIdx];
   if (stepObj && stepObj.next) {
     actionContainer.innerHTML = `
       <div class="space-y-2">
@@ -734,13 +757,14 @@ function renderResponderStateMachine(inc) {
       </div>
     `;
   }
+  if (window.lucide) window.lucide.createIcons();
 }
 
 async function advanceResponderState(incId, targetStatus, groundNote) {
   try {
     const resp = await fetch(`/api/incidents/${incId}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (Auth.token || '') },
       body: JSON.stringify({
         status: targetStatus,
         ground_note: groundNote || undefined,
@@ -819,14 +843,14 @@ function submitResponderSitrep() {
         <span>UNIT 3 &bull; OD-05-G-4421</span>
         <span>Just now (${time})</span>
       </div>
-      <div class="text-slate-800 dark:text-slate-200 mt-1 font-medium">${note}</div>
+      <div class="text-slate-800 dark:text-slate-200 mt-1 font-medium">${esc(note)}</div>
     `;
     logEl.insertBefore(newEntry, logEl.children[1] || null);
   }
 
   input.value = '';
   if (statusEl) {
-    statusEl.textContent = '✅ SitRep transmitted to Command';
+    statusEl.textContent = '✅ SitRep logged locally (demo — not transmitted to any real command)';
     setTimeout(() => { statusEl.textContent = ''; }, 4000);
   }
 }

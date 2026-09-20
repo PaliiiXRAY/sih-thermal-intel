@@ -63,7 +63,7 @@
           class="w-full mb-4 px-3.5 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs sm:text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 font-mono">
         
         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" for="auth-key">Authentication Key</label>
-        <input id="auth-key" type="password" value="password123" autocomplete="current-password"
+        <input id="auth-key" type="password" value="" placeholder="Demo password (set per deployment)" autocomplete="current-password"
           class="w-full mb-4 px-3.5 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs sm:text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 font-mono">
         
         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" for="auth-role">Select Dashboard Role</label>
@@ -86,6 +86,8 @@
           <span class="text-slate-500 dark:text-slate-400">Public emergency access:</span>
           <button type="button" id="auth-citizen" onclick="handleAuthGateCitizen()" class="font-bold text-orange-600 dark:text-orange-400 hover:underline cursor-pointer">Citizen safety &rarr;</button>
         </div>
+
+        <button type="button" onclick="openLoginModal()" class="mx-auto mt-4 block text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 underline cursor-pointer">Sign in with system credentials &rarr;</button>
       </div>
     </div>
   </div>
@@ -225,6 +227,7 @@
                             <option value="similipal_wildfire">🌲 Similipal Wildfire (Odisha)</option>
                             <option value="angul_thermal_plant">⚡ Angul Thermal Power Plant (Odisha)</option>
                             <option value="clandestine_thermal_anomaly">⚠️ Unregistered Anomaly (Singrauli)</option>
+                            <option value="live_india">🛰️ LIVE: NASA FIRMS (India Bounding Box)</option>
                         </select>
                         <label class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium cursor-pointer">
                             <input type="checkbox" id="pipeline-live-osm" class="rounded"> Live OSM (Overpass)
@@ -295,11 +298,12 @@
 
                     <!-- Tabs: Classification vs Intelligence -->
                     <div class="border-b border-slate-200 dark:border-slate-800 pb-1 flex gap-4 text-xs font-bold">
-                        <button class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 pb-2">Classification</button>
-                        <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 pb-2">Intelligence</button>
+                        <button id="ntro-btn-class" onclick="switchNtroTab('class')" class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 pb-2">Classification</button>
+                        <button id="ntro-btn-intel" onclick="switchNtroTab('intel')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 pb-2 border-b-2 border-transparent">Intelligence</button>
                     </div>
 
                     <!-- AI Confidence & Classification -->
+                    <div id="ntro-content-class" class="space-y-4 mt-2">
                     <div class="flex items-center justify-between">
                         <div>
                             <span class="text-xs text-slate-400 block font-medium">Classification</span>
@@ -327,7 +331,10 @@
                         </div>
                     </div>
 
+                    </div>
+
                     <!-- Facility Database Match & Wind Spread Vector -->
+                    <div id="ntro-content-intel" class="hidden space-y-4 mt-2">
                     <div class="space-y-2 text-xs">
                         <div class="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-mono block">Facility match</span>
@@ -336,6 +343,7 @@
                         <div id="ntro-detail-wind" class="p-2.5 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-900/60 flex items-center justify-between text-blue-900 dark:text-blue-300 text-[11px] font-mono">
                             <span>Surface Wind: <strong>NE at 18 km/h</strong></span>
                             <span>Downwind Corridor: <strong>2.8 km (toward NH-326)</strong></span>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -418,7 +426,7 @@
                         Incident Command Center
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Real-time situational awareness &bull; Sep 6, 2026 &bull; All states
+                        Simulated situational awareness (demo data) &bull; All states
                     </p>
                 </div>
 
@@ -1095,11 +1103,11 @@
             </div>
 
             <div id="sos-success" class="hidden p-4 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 rounded-xl text-center space-y-2 text-xs">
-                <div class="text-emerald-600 dark:text-emerald-400 font-bold text-sm">✅ Emergency Signal Received</div>
+                <div class="text-emerald-600 dark:text-emerald-400 font-bold text-sm">✅ Demo Emergency Signal Received</div>
                 <p class="text-slate-700 dark:text-slate-300 text-[11px]">
-                    Ticket <strong>#SOS-OD-9041</strong> created. Nearest NDRF Unit 3 has been re-routed to your location.
+                    Ticket <strong>#SOS-OD-9041</strong> created in the demo system. <span class="font-bold text-amber-600">Simulated — no real emergency units were contacted.</span>
                 </p>
-                <div class="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">ETA: 7 mins</div>
+                <div class="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">(simulated) ETA: 7 mins</div>
             </div>
         </div>
     </div>
@@ -1132,7 +1140,7 @@
                 </button>
             </form>
             <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
-                Demo Accounts: <code>analyst@firesense.org</code>, <code>authority@...</code>, <code>responder@...</code> (pwd: <code>password123</code>)
+                Demo Accounts: <code>analyst@firesense.org</code>, <code>authority@...</code>, <code>responder@...</code> — password is set by the deployment (<code>FIRESENSE_DEMO_PASSWORD</code>)
             </div>
         </div>
     </div>
