@@ -52,8 +52,8 @@ def dispatch_alert(incident_id: str) -> dict:
     if not incident:
         raise ValueError(f"Incident {incident_id} not found")
 
-    current = incident.get("status", "DETECTED")
-    for old, new in _path_to_alerted(current):
+    current = incident.get("status", "NEW")
+    for old, new in _path_to_dispatch(current):
         rec = validate_and_transition(incident_id, old, new, "system", f"auto {new.lower()}")
         log_transition(rec)
         incident["status"] = new
@@ -70,9 +70,11 @@ def dispatch_alert(incident_id: str) -> dict:
     return alert
 
 
-def _path_to_alerted(current: str) -> list:
+def _path_to_dispatch(current: str) -> list:
+    # Legacy vocabulary (backend/state_machine.py): an incident becomes
+    # alert-dispatchable once it reaches DISPATCHED.
     path = []
-    chain = ["DETECTED", "CLASSIFIED", "ASSESSED", "ALERTED"]
+    chain = ["NEW", "INVESTIGATING", "VERIFIED", "DISPATCHED"]
     try:
         start = chain.index(current)
     except ValueError:

@@ -28,6 +28,14 @@ from backend.alerts import dispatch_alert, get_approved_alerts
 from backend.state_machine import can_transition, validate_and_transition, VALID_TRANSITIONS
 from backend.incident_logger import log_transition, get_logs, get_all_logs
 from backend.demo_loader import load_all_scenarios, load_facilities, get_responders_nearby
+from backend.legacy_auth import (
+    authenticated_role,
+    is_auth_configured,
+    login_attempt_allowed,
+    login_succeeded,
+    sign_token,
+    verify_demo_credentials,
+)
 from urllib.parse import parse_qs
 
 PORT = 5002
@@ -46,7 +54,7 @@ VALID_TRANSITIONS = {
     "EN ROUTE":     ["ARRIVED"],
     "ARRIVED":      ["CONTAINED"],
     "CONTAINED":    ["RESOLVED"],
-    "RESOLVED":     [],
+    "RESOLVED":     ["NEW", "DISPATCHED"],
 }
 
 # ══════════════════════════════════════════════════════════════════════
@@ -86,15 +94,41 @@ MOCK_RESPONDERS = {
 
 
 class AeroThermalHandler(SimpleHTTPRequestHandler):
+    # P1: security headers sent on every response (200s, JSON errors, 404s).
+    # One override point catches all send_json/serve_file/send_error paths.
+    # 'unsafe-inline'/'unsafe-eval' kept only for the CDN Tailwind play engine,
+    # the inline tailwind.config block, and inline onclick attributes; script
+    # sources are pinned to self + the two demo CDNs (no arbitrary hosts).
+    SECURITY_HEADERS = {
+        "Content-Security-Policy": (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com; "
+            "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; "
+            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'"
+        ),
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "no-referrer",
+        # geolocation kept for the citizen-map "locate me" flow; camera/mic unused.
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)",
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=BASE_DIR, **kwargs)
+
+    def end_headers(self):
+        for name, value in self.SECURITY_HEADERS.items():
+            self.send_header(name, value)
+        super().end_headers()
 
     def do_OPTIONS(self):
         """Handle CORS preflight."""
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
 
     def do_GET(self):
@@ -131,7 +165,8 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/live":
             qs = parse_qs(parsed.query)
-            map_key = qs.get("map_key", [""])[0] or os.environ.get("FIRMS_MAP_KEY", "")
+            # Key comes from the environment only — never accept it as a query param.
+            map_key = os.environ.get("FIRMS_MAP_KEY", "")
             if not map_key:
                 self.send_json({
                     "error": "Missing 'map_key'. Get one at https://firms.modap.eosdis.nasa.gov/api/map_key/",
@@ -327,7 +362,7 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
             return
 
         # ── GET /api/incident/:id (legacy alias) ──
-        if path.startswith("/api/incident/") and "/status" not in path and "/dispatch" not in path:
+        if path.startswith("/api/incident/") and not path.startswith("/api/incidents/") and "/status" not in path and "/dispatch" not in path:
             inc_id = path.replace("/api/incident/", "").strip()
             if inc_id in INCIDENTS:
                 item = dict(INCIDENTS[inc_id])
@@ -391,12 +426,10 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
             return
 
         if path == "/auth/me":
-            auth_header = self.headers.get("Authorization", "")
-            role = "analyst"
-            for r in ["admin", "authority", "responder", "analyst"]:
-                if r in auth_header.lower():
-                    role = r
-                    break
+            role = authenticated_role(self.headers.get("Authorization", ""))
+            if role is None:
+                self.send_json({"error": "Invalid or expired token"}, 401)
+                return
             user_map = {
                 "admin": {"id": "USR-000", "full_name": "System Administrator", "email": "admin@firesense.org", "role": "admin", "is_active": True},
                 "authority": {"id": "USR-002", "full_name": "Command Authority", "email": "authority@firesense.org", "role": "authority", "is_active": True},
@@ -406,6 +439,52 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
             self.send_json(user_map.get(role, user_map["analyst"]))
             return
 
+        if path.startswith("/api/incidents/") and path.endswith("/timeline"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            log = store.get_status_log(inc_id) if inc_id else []
+            timeline_events = []
+            for entry in log:
+                timeline_events.append({
+                    "timestamp": entry.get("timestamp", datetime.now(timezone.utc).isoformat()),
+                    "status": entry.get("status", "NEW"),
+                    "actor": entry.get("changed_by", "SYSTEM"),
+                    "note": entry.get("note", "")
+                })
+            self.send_json({"incident_id": inc_id, "events": timeline_events})
+            return
+
+        if path.startswith("/api/incidents/") and path.endswith("/context"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            responders = MOCK_RESPONDERS.get(inc_id, [])
+            self.send_json({
+                "incident_id": inc_id,
+                "nearest_assets": [
+                    {"name": "Substation Angul-4", "distance_km": 4.2},
+                    {"name": "Mahanadi Pipeline Junction", "distance_km": 7.8}
+                ],
+                "nearest_responders": responders
+            })
+            return
+
+        if path.startswith("/api/incidents/") and path.endswith("/risk"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            if inc_id in INCIDENTS:
+                inc = INCIDENTS[inc_id]
+                self.send_json({
+                    "incident_id": inc_id,
+                    "risk_score": inc.get("risk_score", 0),
+                    "reasons": inc.get("explain_classification", {}).get("evidence", [])
+                })
+            else:
+                self.send_json({
+                    "incident_id": inc_id,
+                    "risk_score": 0,
+                    "reasons": ["Incident not found"]
+                })
+            return
 
         self.send_error(404, "Not Found")
 
@@ -417,27 +496,39 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
 
         # ── POST /auth/login ──
         if path == "/auth/login":
-            email = body.get("email", "analyst@firesense.org")
-            role = "analyst"
-            if "admin" in email:
-                role = "admin"
-            elif "authority" in email:
-                role = "authority"
-            elif "responder" in email:
-                role = "responder"
-            
+            email = (body.get("email") or "").strip()
+            password = body.get("password") or ""
+            ip = self.client_address[0] if self.client_address else "unknown"
+
+            if not is_auth_configured():
+                self.send_json({
+                    "error": "Authentication is not configured on this deployment. "
+                             "Set FIRESENSE_DEMO_PASSWORD and FIRESENSE_TOKEN_SECRET.",
+                    "code": "AUTH_NOT_CONFIGURED",
+                }, 503)
+                return
+
+            if not login_attempt_allowed(ip):
+                self.send_json({"error": "Too many login attempts. Try again shortly."}, 429)
+                return
+
+            role = verify_demo_credentials(email, password)
+            if role is None:
+                self.send_json({"error": "Invalid email or password"}, 401)
+                return
+            login_succeeded(ip)
+
             user_map = {
                 "admin": {"id": "USR-000", "full_name": "System Administrator", "email": "admin@firesense.org", "role": "admin", "is_active": True},
                 "authority": {"id": "USR-002", "full_name": "Command Authority", "email": "authority@firesense.org", "role": "authority", "is_active": True},
                 "responder": {"id": "USR-003", "full_name": "NDRF Field Responder", "email": "responder@firesense.org", "role": "responder", "is_active": True},
                 "analyst": {"id": "USR-001", "full_name": "NTRO Satellite Analyst", "email": "analyst@firesense.org", "role": "analyst", "is_active": True},
             }
-            u = user_map.get(role, user_map["analyst"])
             self.send_json({
-                "access_token": f"demo_token_{role}",
+                "access_token": sign_token(email, role),
                 "token_type": "bearer",
                 "expires_in": 3600,
-                "user": u
+                "user": user_map[role],
             })
             return
 
@@ -475,6 +566,14 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
 
         # ── POST /api/incidents/:id/alert ──
         if path.startswith("/api/incidents/") and path.endswith("/alert"):
+            role = authenticated_role(self.headers.get("Authorization", ""))
+            if role is None:
+                self.send_json({"error": "Authentication required"}, 401)
+                return
+            if role not in ("authority", "admin"):
+                self.send_json({"error": "Insufficient role: alert dispatch requires authority or admin"}, 403)
+                return
+
             inc_id = path.split("/")[3]
             if inc_id not in INCIDENTS:
                 self.send_json({"error": "Incident not found"}, 404)
@@ -544,6 +643,9 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
 
         # ── POST /api/reports/verify ──
         if path == "/api/reports/verify":
+            if authenticated_role(self.headers.get("Authorization", "")) is None:
+                self.send_json({"error": "Authentication required"}, 401)
+                return
             try:
                 ok, report = store.verify_report(body.get("id", ""))
                 if ok:
@@ -557,6 +659,13 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
 
         # ── POST /api/incident/:id/dispatch (legacy) ──
         if "/dispatch" in path:
+            role = authenticated_role(self.headers.get("Authorization", ""))
+            if role is None:
+                self.send_json({"error": "Authentication required"}, 401)
+                return
+            if role not in ("authority", "admin"):
+                self.send_json({"error": "Insufficient role: dispatch requires authority or admin"}, 403)
+                return
             try:
                 parts = path.split("/")
                 inc_id = parts[3]
@@ -579,6 +688,13 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
             return
         # --- New operational routes ---
         if path.startswith("/api/incident/") and path.endswith("/alert"):
+            role = authenticated_role(self.headers.get("Authorization", ""))
+            if role is None:
+                self.send_json({"error": "Authentication required"}, 401)
+                return
+            if role not in ("authority", "admin"):
+                self.send_json({"error": "Insufficient role: alert dispatch requires authority or admin"}, 403)
+                return
             parts = path.split("/")
             inc_id = parts[3]
             try:
@@ -591,6 +707,13 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
             return
 
         if path.startswith("/api/incident/") and "/status" in path:
+            role = authenticated_role(self.headers.get("Authorization", ""))
+            if role is None:
+                self.send_json({"error": "Authentication required"}, 401)
+                return
+            if role not in ("authority", "responder", "admin"):
+                self.send_json({"error": "Insufficient role: status updates require authority, responder, or admin"}, 403)
+                return
             parts = path.split("/")
             inc_id = parts[3]
             try:
@@ -647,6 +770,14 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
 
     def _handle_status_update(self, path, body):
         """Update incident status with transition validation. Returns 409 on invalid."""
+        role = authenticated_role(self.headers.get("Authorization", ""))
+        if role is None:
+            self.send_json({"error": "Authentication required"}, 401)
+            return
+        if role not in ("authority", "responder", "admin"):
+            self.send_json({"error": "Insufficient role: status updates require authority, responder, or admin"}, 403)
+            return
+
         # Extract incident ID from either /api/incidents/:id/status or /api/incident/:id/status
         parts = path.split("/")
         # Find "incidents" or "incident" index

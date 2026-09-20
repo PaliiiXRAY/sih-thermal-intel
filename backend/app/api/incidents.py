@@ -430,48 +430,71 @@ def patch_incident_status_endpoint(
         raise AppException(500, "DATABASE_ERROR", f"Failed to update status: {str(e)}")
 
 
-@router.post("/{incident_id}/status")
-def update_incident_status(incident_id: str, payload: IncidentStatusUpdate, db: Session = Depends(get_db)):
+@router.post("/{incident_id}/dispatch")
+def dispatch_incident(
+    incident_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
-    Update incident status in PostgreSQL database.
+    Dispatch responders for an incident (authority/admin only).
+    Requires ASSESSED -> ALERTED transition; records an append-only IncidentLog.
     """
-    inc_id = incident_id.strip()
-    new_status = payload.status.upper() if payload.status else "DETECTED"
+    # 1. Authorization Check
+    user_role = (current_user.role or "").lower()
+    if user_role not in ALLOWED_ALERT_ROLES:
+        raise forbidden_error(
+            f"Role '{current_user.role}' is not authorized to dispatch responders",
+            code="FORBIDDEN",
+        )
 
+    # 2. Fetch Incident from PostgreSQL
+    inc_id = incident_id.strip()
     inc = db.query(Incident).filter(Incident.id == inc_id).first()
-    if inc:
-        inc.status = new_status
+    if not inc:
+        raise not_found_error(f"Incident '{inc_id}' not found", code="NOT_FOUND")
+
+    # 3. State Machine Transition Validation (ASSESSED -> ALERTED)
+    old_status = (inc.status or "DETECTED").upper()
+    allowed_next = VALID_STATUS_TRANSITIONS.get(old_status, set())
+    if "ALERTED" not in allowed_next:
+        raise conflict_error(
+            f"Cannot dispatch incident from status '{old_status}' (allowed: {sorted(allowed_next)})",
+            code="INVALID_STATUS_TRANSITION",
+        )
+
+    # 4. Atomic Transaction: Update Incident status and insert IncidentLog
+    try:
+        inc.status = "ALERTED"
+
+        log_entry = IncidentLog(
+            incident_id=inc.id,
+            old_status=old_status,
+            new_status="ALERTED",
+            action="ALERT_DISPATCH",
+            changed_by=current_user.id,
+            note="Responder dispatch simulated",
+            metadata_={
+                "dispatched_by_role": current_user.role,
+                "dispatched_by_user_id": current_user.id,
+            },
+        )
+        db.add(log_entry)
         db.commit()
         db.refresh(inc)
+
         return {
             "success": True,
             "incident_id": inc_id,
-            "status": new_status,
-            "message": f"Incident {inc_id} updated to {new_status}"
-        }
-
-    raise not_found_error(f"Incident '{inc_id}' not found", code="NOT_FOUND")
-
-
-@router.post("/{incident_id}/dispatch")
-def dispatch_incident(incident_id: str, db: Session = Depends(get_db)):
-    """
-    Simulate responder dispatch for incident in PostgreSQL database.
-    """
-    inc_id = incident_id.strip()
-
-    inc = db.query(Incident).filter(Incident.id == inc_id).first()
-    if inc:
-        inc.status = "ALERTED"
-        db.commit()
-        return {
-            "success": True,
-            "incident_id": inc_id,
+            "old_status": old_status,
             "status": "ALERTED",
-            "message": f"Simulated dispatch triggered for incident {inc_id}"
+            "message": f"Simulated dispatch triggered for incident {inc_id}",
         }
-
-    raise not_found_error(f"Incident '{inc_id}' not found", code="NOT_FOUND")
+    except AppException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise AppException(500, "DATABASE_ERROR", f"Failed to dispatch incident: {str(e)}")
 
 
 @router.get("/{incident_id}/timeline", response_model=Dict[str, Any])

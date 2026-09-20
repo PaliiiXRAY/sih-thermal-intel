@@ -33,11 +33,11 @@ def test_jwt_token_creation_and_decoding():
 
 
 def test_login_flow():
-    """Verify POST /auth/login with seed demo accounts."""
-    # Test valid analyst login
+    """Verify POST /auth/login with env-bootstrapped demo accounts."""
+    # Test valid analyst login (credential comes from conftest's FIRESENSE_BOOTSTRAP_USERS)
     login_res = client.post(
         "/auth/login",
-        json={"email": "analyst@firesense.org", "password": "password123"}
+        json={"email": "analyst@firesense.org", "password": "firesense-test-pass"}
     )
     assert login_res.status_code == 200
     data = login_res.json()

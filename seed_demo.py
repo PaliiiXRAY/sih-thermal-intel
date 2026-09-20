@@ -10,7 +10,7 @@ import sys
 from geoalchemy2.elements import WKTElement
 from sqlalchemy.orm import Session
 
-from backend.app.core.security import seed_demo_users_if_needed
+from backend.app.core.security import bootstrap_demo_users_if_needed
 from backend.app.db.session import SessionLocal
 from backend.app.models.alert import Alert
 from backend.app.models.asset import Asset
@@ -466,7 +466,7 @@ def seed_scenario(db: Session, scenario: dict) -> Incident:
 def seed_all_scenarios(db: Session):
     """Seed all 5 curated demo scenarios into database."""
     print("Seeding demo users...")
-    seed_demo_users_if_needed(db)
+    bootstrap_demo_users_if_needed(db)
     print("Seeding curated demo scenarios...")
     for key, scenario in CURATED_SCENARIOS.items():
         inc = seed_scenario(db, scenario)
@@ -522,7 +522,7 @@ def main():
             if not target:
                 print(f"Error: Unknown scenario '{args.scenario}'. Available: {list(CURATED_SCENARIOS.keys())}")
                 sys.exit(1)
-            seed_demo_users_if_needed(db)
+            bootstrap_demo_users_if_needed(db)
             inc = seed_scenario(db, target)
             print(f"[OK] Seeded {target['title']} -> {inc.id} [{inc.status}]")
     finally:

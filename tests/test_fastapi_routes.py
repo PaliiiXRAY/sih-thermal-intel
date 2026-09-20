@@ -12,6 +12,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.app.main import app
 from backend.app.core.config import DATABASE_URL
 from backend.app.models.incident import Incident
+from backend.app.models.user import User
+from backend.app.core.security import create_access_token, hash_password
 
 client = TestClient(app)
 engine = create_engine(DATABASE_URL)
@@ -43,6 +45,11 @@ def setup_test_incident():
             explanation={"evidence": ["high_frp", "forest_landcover"]},
         )
         db.add(inc)
+        db.commit()
+
+    # Reset incident status so tests are order-independent
+    if inc and inc.status != "DETECTED":
+        inc.status = "DETECTED"
         db.commit()
 
     yield
@@ -89,26 +96,64 @@ def test_get_single_incident():
     assert "error" in r_notfound.json()
 
 
-def test_update_incident_status():
-    inc_id = "INC-2026-0042"
-    response = client.post(
-        f"/api/v2/incidents/{inc_id}/status",
-        json={"status": "INVESTIGATING"}
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["success"] is True
-    assert data["status"] == "INVESTIGATING"
-    assert data["incident_id"] == inc_id
+def _admin_headers():
+    """Create (or reuse) an admin user and return auth headers."""
+    db = TestingSessionLocal()
+    user = db.query(User).filter(User.email == "route-admin@firesense.org").first()
+    if not user:
+        user = User(
+            id="usr_route_admin",
+            email="route-admin@firesense.org",
+            hashed_password=hash_password("test-pass"),
+            full_name="Route Admin",
+            role="admin",
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+    token = create_access_token({"sub": user.id, "email": user.email, "role": user.role})
+    db.close()
+    return {"Authorization": f"Bearer {token}"}
 
 
-def test_dispatch_incident():
+def test_update_incident_status_unauthenticated_rejected():
+    """The insecure unauthenticated POST status alias must be gone; PATCH requires auth."""
     inc_id = "INC-2026-0042"
-    response = client.post(f"/api/v2/incidents/{inc_id}/dispatch")
-    assert response.status_code == 200
-    data = response.json()
+    assert client.post(f"/api/v2/incidents/{inc_id}/status", json={"status": "CLASSIFIED"}).status_code == 405
+    assert client.patch(f"/api/v2/incidents/{inc_id}/status", json={"status": "CLASSIFIED"}).status_code == 401
+
+
+def test_update_incident_status_with_auth():
+    inc_id = "INC-2026-0042"
+    headers = _admin_headers()
+    res = client.patch(f"/api/v2/incidents/{inc_id}/status", json={"status": "CLASSIFIED"}, headers=headers)
+    assert res.status_code == 200, res.text
+    data = res.json()
+    assert data["status"] == "CLASSIFIED"
+    assert data["id"] == inc_id
+
+
+def test_dispatch_incident_requires_auth():
+    assert client.post("/api/v2/incidents/INC-2026-0042/dispatch").status_code == 401
+
+
+def test_dispatch_incident_with_auth():
+    inc_id = "INC-2026-0042"
+    headers = _admin_headers()
+
+    def transition(to_status):
+        r = client.patch(f"/api/v2/incidents/{inc_id}/status", json={"status": to_status}, headers=headers)
+        assert r.status_code == 200, r.text
+        return r.json()
+
+    transition("CLASSIFIED")
+    transition("ASSESSED")
+    res = client.post(f"/api/v2/incidents/{inc_id}/dispatch", headers=headers)
+    assert res.status_code == 200, res.text
+    data = res.json()
     assert data["success"] is True
     assert data["status"] == "ALERTED"
+    assert data["old_status"] == "ASSESSED"
 
 
 def test_get_stats():
@@ -119,16 +164,17 @@ def test_get_stats():
     assert "critical_alerts" in data
 
 
-def test_get_reports():
-    response = client.get("/api/v2/reports")
-    assert response.status_code == 200
-    data = response.json()
+def test_get_reports_requires_auth():
+    assert client.get("/api/v2/reports").status_code == 401
+    res = client.get("/api/v2/reports", headers=_admin_headers())
+    assert res.status_code == 200
+    data = res.json()
     assert "reports" in data
     assert isinstance(data["reports"], list)
 
 
 def test_submit_and_verify_report():
-    # Submit report
+    # Submit stays public
     submit_res = client.post(
         "/api/v2/reports/submit",
         json={
@@ -142,10 +188,13 @@ def test_submit_and_verify_report():
     assert res_data["success"] is True
     report_id = res_data["report"]["id"]
 
-    # Verify report
+    # Verify now requires auth
+    assert client.post("/api/v2/reports/verify", json={"id": report_id}).status_code == 401
+
     verify_res = client.post(
         "/api/v2/reports/verify",
-        json={"id": report_id}
+        json={"id": report_id},
+        headers=_admin_headers(),
     )
     assert verify_res.status_code == 200
     verify_data = verify_res.json()

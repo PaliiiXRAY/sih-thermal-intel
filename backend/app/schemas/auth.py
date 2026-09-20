@@ -10,7 +10,7 @@ from backend.app.schemas.common import RoleEnum
 
 class LoginRequest(BaseModel):
     email: str = Field(..., json_schema_extra={"example": "analyst@firesense.org"})
-    password: str = Field(..., json_schema_extra={"example": "password123"})
+    password: str = Field(..., json_schema_extra={"example": "change-me"})
 
 
 class TokenResponse(BaseModel):

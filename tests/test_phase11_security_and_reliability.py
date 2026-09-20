@@ -40,7 +40,7 @@ def test_rbac_users(db_session):
         u = User(
             id=u_id,
             email=email,
-            hashed_password=hash_password("password123"),
+            hashed_password=hash_password("firesense-test-pass"),
             full_name=f"Phase11 {role.capitalize()}",
             role=role,
             is_active=True,

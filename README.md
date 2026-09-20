@@ -1,13 +1,19 @@
 # 🔥 FireSense | SIH26162 (NTRO)
 ### Spaceborne Thermal Anomaly Intelligence & Autonomous Disaster Response
 
-[![Production Live](https://img.shields.io/badge/Production-Live-emerald?style=flat-square&logo=vercel)](https://sih-thermal-intel.vercel.app)
+[![Deployment](https://img.shields.io/badge/Deployment-Redeploy%20Pending%20%E2%80%A2%20P0%2BP1%20Done-blue?style=flat-square&logo=vercel)](https://sih-thermal-intel.vercel.app)
 [![Problem Statement](https://img.shields.io/badge/SIH-SIH26162-orange?style=flat-square)](https://sih-thermal-intel.vercel.app)
 [![Agency](https://img.shields.io/badge/Agency-NTRO-blue?style=flat-square)](https://sih-thermal-intel.vercel.app)
 [![Satellite Data](https://img.shields.io/badge/Satellite-NASA%20FIRMS%20VIIRS%20375m-red?style=flat-square)](https://firms.modaps.eosdis.nasa.gov/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%20%2B%20PostGIS-336791?style=flat-square&logo=postgresql)](https://postgis.net)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20REST-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Tests](https://img.shields.io/badge/Tests-119%20Passing-success?style=flat-square)](https://docs.pytest.org)
+[![Backend](https://img.shields.io/badge/Backend-Legacy%20HTTP%20%2B%20FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Tests](https://img.shields.io/badge/Tests-192%20passing-brightgreen?style=flat-square)](https://docs.pytest.org)
+
+> **Deployment status (2026-09-20):** the public URL runs the legacy stdlib HTTP handler
+> (`app.py` / `api/index.py`) and is **still exposed to unauthenticated admin access until the in-tree P0
+> auth fix is redeployed**. The FastAPI backend (`backend/app/`) runs only via Docker. Post-deploy the demo
+> password is set by `FIRESENSE_DEMO_PASSWORD` — there is no default credential, and missing env config
+> yields 401/503. An automated CI pipeline (`.github/workflows/ci.yml`) runs the test suite on push/PR.
 
 > **Live Production Platform:** [https://sih-thermal-intel.vercel.app](https://sih-thermal-intel.vercel.app)  
 > **Tactical Operations Dashboard:** [https://sih-thermal-intel.vercel.app/app](https://sih-thermal-intel.vercel.app/app)  

@@ -1,19 +1,17 @@
-version: '3.8'
-
 services:
   db:
     image: postgis/postgis:15-3.3
     container_name: firesense_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: firesense
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in the environment or .env (see .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:-firesense}
     ports:
       - "5432:5432"
     volumes:
       - firesense_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d firesense"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-firesense}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,12 +20,13 @@ services:
     build: .
     container_name: firesense_backend
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/firesense
-      JWT_SECRET_KEY: firesense-docker-production-secret-key-32chars
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@db:5432/${POSTGRES_DB:-firesense}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set in the environment or .env (see .env.example)}
       JWT_ALGORITHM: HS256
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 1440
       APP_MODE: demo
       DATA_SOURCE: cache
+      FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:?FIRMS_MAP_KEY must be set in the environment or .env (see .env.example)}
     ports:
       - "8000:8000"
     depends_on:

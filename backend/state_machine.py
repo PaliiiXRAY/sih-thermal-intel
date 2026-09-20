@@ -4,15 +4,15 @@ Enforces legal transitions. Every call returns a transition record for logging.
 """
 
 VALID_TRANSITIONS = {
-    "DETECTED":     ["CLASSIFIED"],
-    "CLASSIFIED":   ["ASSESSED"],
-    "ASSESSED":     ["ALERTED"],
-    "ALERTED":      ["ACKNOWLEDGED"],
-    "ACKNOWLEDGED": ["RESOLVED", "EN_ROUTE"],
-    "RESOLVED":     [],
-    "EN_ROUTE":     ["ARRIVED"],
+    "NEW":          ["INVESTIGATING"],
+    "INVESTIGATING":["VERIFIED"],
+    "VERIFIED":     ["DISPATCHED"],
+    "DISPATCHED":   ["ACKNOWLEDGED", "INVESTIGATING"],
+    "ACKNOWLEDGED": ["EN ROUTE"],
+    "EN ROUTE":     ["ARRIVED"],
     "ARRIVED":      ["CONTAINED"],
     "CONTAINED":    ["RESOLVED"],
+    "RESOLVED":     ["NEW", "DISPATCHED"],
 }
 
 

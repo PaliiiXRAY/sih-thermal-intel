@@ -5,22 +5,92 @@ and identifies proximity to registered industrial plants, refineries, and power 
 """
 import math
 import json
+import os
 import urllib.request
 import urllib.parse
+try:
+    import psycopg2
+    HAS_PSYCOPG2 = True
+except ImportError:
+    HAS_PSYCOPG2 = False
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 SEARCH_RADIUS_M = 1000  # facility / landuse query radius around a hotspot
+
+# PostGIS is opt-in and closed by default: credentials are never hardcoded.
+# Only when a deployment supplies FIRESENSE_SPATIAL_DB_DSN (e.g.
+# "dbname=spatial_db user=... password=... host=...") does fetch_live_context
+# attempt the local zero-latency query; otherwise it goes straight to Overpass.
+SPATIAL_DB_DSN = os.environ.get("FIRESENSE_SPATIAL_DB_DSN", "")
 
 
 class OSMCorrelator:
     @staticmethod
     def fetch_live_context(lat: float, lon: float, timeout: int = 20) -> dict:
         """
-        Live Overpass API query: finds the dominant landuse polygon and nearest
-        registered industrial facility within SEARCH_RADIUS_M of the hotspot.
-        Returns the same schema as correlate_hotspot(); raises on network failure
-        so the caller can fall back to cached context.
+        Live context query. First attempts local PostGIS database (zero-latency).
+        If database is unavailable or missing, gracefully falls back to the Overpass API.
         """
+        if HAS_PSYCOPG2 and SPATIAL_DB_DSN:
+            try:
+                # 2-second timeout so it fails fast if DB is not running
+                conn = psycopg2.connect(SPATIAL_DB_DSN, connect_timeout=2)
+                cursor = conn.cursor()
+                
+                # Query for nearest industrial feature
+                query_fac = """
+                    SELECT tags->'name', tags->'industrial', tags->'man_made',
+                           ST_Distance(way::geography, ST_MakePoint(%s, %s)::geography) as dist
+                    FROM planet_osm_polygon
+                    WHERE ST_DWithin(way::geography, ST_MakePoint(%s, %s)::geography, %s)
+                      AND (tags ? 'industrial' OR tags ? 'man_made')
+                    ORDER BY dist ASC LIMIT 1;
+                """
+                cursor.execute(query_fac, (lon, lat, lon, lat, SEARCH_RADIUS_M))
+                facility_row = cursor.fetchone()
+                
+                # Query for landuse
+                query_lu = """
+                    SELECT tags->'landuse', tags->'natural'
+                    FROM planet_osm_polygon
+                    WHERE ST_Intersects(way::geography, ST_MakePoint(%s, %s)::geography)
+                      AND (tags ? 'landuse' OR tags ? 'natural')
+                    LIMIT 1;
+                """
+                cursor.execute(query_lu, (lon, lat))
+                lu_row = cursor.fetchone()
+                
+                conn.close()
+                
+                facility_name = None
+                facility_type = "None"
+                best_dist = SEARCH_RADIUS_M * 2
+                if facility_row:
+                    name, ind, man, dist = facility_row
+                    facility_name = name or "Unnamed Industrial Feature"
+                    facility_type = ind or man or "industrial"
+                    best_dist = float(dist)
+                
+                landuse = "unclassified"
+                osm_tag = "landuse=unclassified"
+                if lu_row:
+                    lu, nat = lu_row
+                    landuse = lu or nat or "unclassified"
+                    osm_tag = f"{'landuse' if lu else 'natural'}={landuse}"
+
+                return {
+                    "landuse": landuse,
+                    "osm_tag": osm_tag,
+                    "facility_name": facility_name,
+                    "facility_type": facility_type,
+                    "distance_to_facility_m": round(best_dist, 1),
+                    "live": True
+                }
+            except Exception as e:
+                print(f"[PostGIS] Connection or query failed ({e}). Falling back to Overpass API...")
+                pass
+                
+        # --- Fallback to Original HTTP Overpass API ---
         query = f"""
         [out:json][timeout:15];
         (

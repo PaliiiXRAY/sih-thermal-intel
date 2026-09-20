@@ -8,6 +8,16 @@ let currentLanguage = 'en';
 let selectedIncidentId = null;
 let allIncidents = [];
 
+// Shared HTML-escaper for every innerHTML sink that interpolates user- or
+// server-controlled strings (P1 stored-XSS sweep). Neutralizes & < > " ' so
+// injected markup can never execute. Escaping & first makes already-escaped
+// input inert (amp; -> &amp;amp;), never double-rendered as markup.
+function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
 // ==========================================
 // 1. AUTHENTICATION & RBAC STATE LAYER
 // ==========================================
@@ -18,6 +28,16 @@ const Auth = {
 
     async init() {
         const qp = new URLSearchParams(window.location.search).get('portal');
+        const qpRoleMap = { ntro: 'analyst', command: 'authority', responder: 'responder', citizen: 'citizen' };
+        const expectedRole = (qp && qpRoleMap[qp]) ? qpRoleMap[qp] : null;
+
+        // If the URL dictates a specific role and it doesn't match our saved role, clear the session.
+        if (expectedRole && this.role && this.role !== expectedRole) {
+            this.token = null;
+            sessionStorage.removeItem('firesense_jwt');
+            sessionStorage.removeItem('firesense_role');
+        }
+
         if (qp === 'citizen') {
             closeAuthGate();
             await this.switchRole('citizen', false);
@@ -43,8 +63,8 @@ const Auth = {
                 sessionStorage.removeItem('firesense_jwt');
             }
         }
-        const qpRoleMap = { ntro: 'analyst', command: 'authority', responder: 'responder', citizen: 'citizen' };
-        const initialRole = (qp && qpRoleMap[qp]) ? qpRoleMap[qp] : (sessionStorage.getItem('firesense_role') || 'analyst');
+        
+        const initialRole = expectedRole || (sessionStorage.getItem('firesense_role') || 'analyst');
         await this.switchRole(initialRole, false);
     },
 
@@ -70,11 +90,14 @@ const Auth = {
     },
 
     async switchRole(role, notify = true) {
+        // Demo password is configured per-deployment via FIRESENSE_DEMO_PASSWORD.
+        // An empty password makes the auto-login fail below; the UI then falls
+        // back to local role state so dashboards still render unprivileged.
         const credentials = {
-            analyst: { email: 'analyst@firesense.org', password: 'password123' },
-            authority: { email: 'authority@firesense.org', password: 'password123' },
-            responder: { email: 'responder@firesense.org', password: 'password123' },
-            admin: { email: 'admin@firesense.org', password: 'password123' }
+            analyst: { email: 'analyst@firesense.org', password: '' },
+            authority: { email: 'authority@firesense.org', password: '' },
+            responder: { email: 'responder@firesense.org', password: '' },
+            admin: { email: 'admin@firesense.org', password: '' }
         };
 
         if (role === 'citizen') {
@@ -209,6 +232,30 @@ function onAuthRoleChange(role) {
 async function handleAuthGateSubmit() {
     const roleSel = document.getElementById('auth-role');
     const role = roleSel ? roleSel.value : 'analyst';
+    const op = document.getElementById('auth-operator');
+    const key = document.getElementById('auth-key');
+    const operator = op ? op.value.trim() : '';
+    const authErr = document.getElementById('auth-error');
+
+    // A typed Authentication Key performs a real POST /auth/login; the role
+    // returned by the server is authoritative (overrides the dropdown on
+    // mismatch). An empty key keeps the old demo fallback (auto-login attempt
+    // -> local role state so dashboards still render unprivileged).
+    if (key && key.value) {
+        if (authErr) { authErr.classList.add('hidden'); authErr.textContent = ''; }
+        try {
+            await Auth.login(operator, key.value);
+            sessionStorage.setItem('firesense_auth_passed', '1');
+            closeAuthGate();
+        } catch (err) {
+            if (authErr) {
+                authErr.textContent = (err && err.message) ? err.message : 'Authentication failed';
+                authErr.classList.remove('hidden');
+            }
+        }
+        return;
+    }
+
     sessionStorage.setItem('firesense_auth_passed', '1');
     closeAuthGate();
     await Auth.switchRole(role);
@@ -218,6 +265,49 @@ async function handleAuthGateCitizen() {
     sessionStorage.setItem('firesense_auth_passed', '1');
     closeAuthGate();
     await Auth.switchRole('citizen');
+}
+
+// Credential login modal (static/index.html #loginModal). Reachable from the
+// "Sign in with system credentials" link inside the auth gate.
+function openLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (!modal) return;
+    const op = document.getElementById('auth-operator');
+    const emailEl = document.getElementById('login-email');
+    if (emailEl && op && op.value) emailEl.value = op.value;
+    const errEl = document.getElementById('login-error-msg');
+    if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+    modal.classList.remove('hidden');
+    const pw = document.getElementById('login-password');
+    if (pw) pw.focus();
+}
+
+function closeLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function handleCustomLogin(event) {
+    event.preventDefault();
+    const email = (document.getElementById('login-email') || {}).value || '';
+    const password = (document.getElementById('login-password') || {}).value || '';
+    const errEl = document.getElementById('login-error-msg');
+    const submit = document.getElementById('btn-login-submit');
+    if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+    if (submit) submit.disabled = true;
+    try {
+        await Auth.login(email.trim(), password);
+        sessionStorage.setItem('firesense_auth_passed', '1');
+        closeLoginModal();
+        closeAuthGate();
+    } catch (err) {
+        if (errEl) {
+            errEl.textContent = (err && err.message) ? err.message : 'Authentication failed';
+            errEl.classList.remove('hidden');
+        }
+    } finally {
+        if (submit) submit.disabled = false;
+    }
 }
 
 document.addEventListener('keydown', (e) => {
@@ -241,7 +331,7 @@ async function apiFetch(url, options = {}) {
         const data = await resp.json();
         if (!resp.ok) {
             const errCode = data.error?.code || `HTTP_${resp.status}`;
-            const errMsg = data.error?.message || data.detail || 'API request rejected';
+            const errMsg = typeof data.error === 'string' ? data.error : (data.error?.message || data.detail || 'API request rejected');
             throw new Error(`[${errCode}] ${errMsg}`);
         }
         return data;
@@ -297,7 +387,7 @@ function showToast(message, type = 'info') {
     toast.innerHTML = `
         <div class="flex items-center gap-2">
             <span>${type === 'error' ? '⚠️' : type === 'success' ? '✅' : 'ℹ️'}</span>
-            <span>${message}</span>
+            <span>${esc(message)}</span>
         </div>
         <button onclick="this.parentElement.remove()" class="opacity-70 hover:opacity-100 font-bold">&times;</button>
     `;
@@ -514,7 +604,8 @@ async function updateNtroDetailsPanel(id) {
     }
     if (classEl) classEl.textContent = inc.classification || 'DETECTED';
     if (confEl) {
-        confEl.textContent = inc.classification_confidence != null ? `${Math.round(inc.classification_confidence * 100)}%` : 'Pending';
+        let confValue = inc.confidence != null ? inc.confidence : (inc.classification_confidence != null ? Math.round(inc.classification_confidence * 100) : null);
+        confEl.textContent = confValue != null ? `${confValue}%` : 'Pending';
     }
     if (facilityEl) facilityEl.textContent = inc.location_name || inc.explanation?.region || 'Registered Sector';
     if (matchEl) matchEl.textContent = `${inc.classification || 'Thermal Anomaly'} • Sentinel & FIRMS Automated Ingestion Engine`;
@@ -523,8 +614,8 @@ async function updateNtroDetailsPanel(id) {
     const tempEl = document.getElementById('ntro-detail-temp');
     const areaEl = document.getElementById('ntro-detail-area');
     const sourceEl = document.getElementById('ntro-detail-source');
-    if (tempEl) tempEl.innerHTML = `${inc.explanation?.evidence?.brightness_k ? Math.round(inc.explanation.evidence.brightness_k - 273.15) : 340}&deg;C`;
-    if (areaEl) areaEl.innerHTML = `${inc.persistence_score != null ? Number(inc.persistence_score).toFixed(1) : 15.0}% persistence`;
+    if (tempEl) tempEl.innerHTML = `${inc.brightness_c != null ? Math.round(inc.brightness_c) : (inc.explanation?.evidence?.brightness_k ? Math.round(inc.explanation.evidence.brightness_k - 273.15) : 340)}&deg;C`;
+    if (areaEl) areaEl.innerHTML = `${inc.frp_mw != null ? Number(inc.frp_mw).toFixed(1) + ' MW' : (inc.persistence_score != null ? Number(inc.persistence_score).toFixed(1) + '% persistence' : '15.0 MW')}`;
     if (sourceEl) sourceEl.textContent = inc.detection_confidence || 'VIIRS_SNPP';
 
     // Populate Intelligence Dossier Tab
@@ -871,13 +962,13 @@ function renderResponderView() {
                  'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'
              }">
             <div class="flex items-center justify-between text-xs">
-                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${inc.id}</span>
+                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${esc(inc.id)}</span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ${STATUS_COLORS[inc.status] || 'bg-slate-500'}">
-                    ${inc.status}
+                    ${esc(inc.status)}
                 </span>
             </div>
             <div class="text-xs font-bold text-slate-900 dark:text-white mt-1 line-clamp-1">
-                ${inc.explanation?.title || inc.classification}
+                ${esc(inc.explanation?.title || inc.classification)}
             </div>
             <div class="flex items-center justify-between text-xs text-slate-800 dark:text-slate-200 mt-2 font-medium">
                 <span>Priority: <strong class="text-red-600 font-bold">${inc.risk_score != null ? Number(inc.risk_score).toFixed(1) : '–'}</strong></span>
@@ -1153,7 +1244,7 @@ function submitSos() {
     const success = document.getElementById('sos-success');
     if (form) form.classList.add('hidden');
     if (success) success.classList.remove('hidden');
-    showToast('🚨 SOS Transmitted: Incident ticket dispatched to District Incident Command', 'error');
+    showToast('🚨 SOS submitted (demo): no real emergency service was contacted', 'error');
 }
 
 // ==========================================
@@ -1223,7 +1314,11 @@ async function runPipelineScenario() {
     if (window.lucide) lucide.createIcons();
 
     try {
-        const fc = await apiFetch(`/api/pipeline/scenario?id=${scenarioId}&live_osm=${liveOsm}`);
+        let url = `/api/pipeline/scenario?id=${scenarioId}&live_osm=${liveOsm}`;
+        if (scenarioId === 'live_india') {
+            url = `/api/live?bbox=6,68,36,98&source=viirs&days=5&live_osm=${liveOsm}`;
+        }
+        const fc = await apiFetch(url);
         lastPipelineFC = fc;
 
         pipelineLayer.clearLayers();
@@ -1239,11 +1334,11 @@ async function runPipelineScenario() {
                 fillColor: color, fillOpacity: 0.35
             }).bindPopup(`
                 <div style="font-family:sans-serif;font-size:12px;min-width:220px">
-                    <b style="color:${color}">${label}</b><br/>
+                    <b style="color:${color}">${esc(label)}</b><br/>
                     <span style="color:#555">${p.classification?.confidence_percent || 90}% confidence &bull; FRP ${p.firms?.frp || 45} MW</span><br/>
-                    <b>Facility:</b> ${p.osm?.facility_name || 'None mapped'}<br/>
+                    <b>Facility:</b> ${esc(p.osm?.facility_name || 'None mapped')}<br/>
                     <b>Persistence:</b> ${p.persistence?.persistence_score || 80}%<br/>
-                    <b>Land-cover:</b> ${p.landcover?.worldcover_class || 'Industrial'}
+                    <b>Land-cover:</b> ${esc(p.landcover?.worldcover_class || 'Industrial')}
                 </div>
             `).addTo(pipelineLayer);
             pipelineMarkers.push(marker);
@@ -1266,14 +1361,14 @@ async function runPipelineScenario() {
                 return `
                 <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs space-y-1">
                     <div class="flex items-center justify-between">
-                        <span class="font-bold font-mono" style="color:${color}">${c.classification}</span>
+                        <span class="font-bold font-mono" style="color:${color}">${esc(c.classification)}</span>
                         <span class="font-mono text-slate-400">${c.confidence_percent}%</span>
                     </div>
                     <div class="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        ${p.firms?.id || 'HS'} &bull; ${Number(p.firms?.lat).toFixed(3)}&deg;N ${Number(p.firms?.lon).toFixed(3)}&deg;E &bull; FRP ${p.firms?.frp} MW
+                        ${esc(p.firms?.id || 'HS')} &bull; ${Number(p.firms?.lat).toFixed(3)}&deg;N ${Number(p.firms?.lon).toFixed(3)}&deg;E &bull; FRP ${p.firms?.frp} MW
                     </div>
                     <div class="text-[11px] text-slate-600 dark:text-slate-300">
-                        <b>Facility:</b> ${p.osm?.facility_name || 'None mapped'} &bull; <b>Persistence:</b> ${p.persistence?.persistence_score}%
+                        <b>Facility:</b> ${esc(p.osm?.facility_name || 'None mapped')} &bull; <b>Persistence:</b> ${p.persistence?.persistence_score}%
                     </div>
                 </div>`;
             }).join('');
@@ -1281,7 +1376,7 @@ async function runPipelineScenario() {
         showToast(`AI Pipeline: ${fc.features?.length || 0} detections classified`, 'success');
     } catch (err) {
         if (resultsEl) {
-            resultsEl.innerHTML = `<div class="text-xs text-red-500 font-mono py-6 text-center border border-red-200 rounded-lg">Pipeline error: ${err.message}</div>`;
+            resultsEl.innerHTML = `<div class="text-xs text-red-500 font-mono py-6 text-center border border-red-200 rounded-lg">Pipeline error: ${esc(err.message)}</div>`;
         }
         showToast(`Pipeline execution error: ${err.message}`, 'error');
     } finally {

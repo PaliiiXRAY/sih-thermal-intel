@@ -54,6 +54,32 @@ async def log_requests(request: Request, call_next):
     return response
 
 
+# P1: security headers on every FastAPI response (Docker path).
+# Keep in sync with AeroThermalHandler.SECURITY_HEADERS in app.py.
+SECURITY_HEADERS = {
+    "content-security-policy": (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com; "
+        "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; "
+        "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'"
+    ),
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "referrer-policy": "no-referrer",
+    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
+}
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
+
+
 # Global Exception Handlers for Centralized Error Format
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):

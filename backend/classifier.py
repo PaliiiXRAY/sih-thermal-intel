@@ -8,7 +8,9 @@ import os
 import sys
 
 # Add project root to path to ensure ml package is importable
-sys.path.append(os.getcwd())
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 try:
     from ml.src.explain import explain_prediction
