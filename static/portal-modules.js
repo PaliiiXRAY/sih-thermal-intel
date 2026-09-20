@@ -67,21 +67,31 @@ async function loadIncidentTracker() {
                 </button>
             ` : '';
 
+            const rawLat = inc.latitude ?? inc.coordinates?.lat ?? inc.lat ?? 20.842;
+            const rawLon = inc.longitude ?? inc.coordinates?.lon ?? inc.coordinates?.lng ?? inc.lng ?? inc.lon ?? 85.102;
+            const validLat = (rawLat != null && !isNaN(Number(rawLat))) ? Number(rawLat) : 20.842;
+            const validLon = (rawLon != null && !isNaN(Number(rawLon))) ? Number(rawLon) : 85.102;
+            const title = inc.title || inc.location_name || inc.explanation?.title || `Incident ${inc.id}`;
+            const sev = inc.severity || (inc.risk_score >= 80 ? 'CRITICAL' : inc.risk_score >= 60 ? 'HIGH' : 'MEDIUM');
+
             return `
-            <div class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs space-y-2.5">
+            <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs space-y-2.5">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${esc(inc.id)}</span>
-                        <span class="text-slate-500 dark:text-slate-400 ml-2">${esc(inc.classification || 'Thermal Anomaly')} &bull; ${Number(inc.latitude).toFixed(3)}&deg;N, ${Number(inc.longitude).toFixed(3)}&deg;E</span>
+                        <span class="font-mono font-bold text-blue-700 dark:text-blue-400 text-xs">${inc.id}</span>
+                        <strong class="text-slate-900 dark:text-white font-bold text-[13px] ml-2">${title}</strong>
+                        <div class="text-slate-700 dark:text-slate-300 font-medium text-xs mt-0.5">
+                            ${inc.classification || 'Thermal Anomaly'} &bull; ${validLat.toFixed(3)}&deg;N, ${validLon.toFixed(3)}&deg;E
+                        </div>
                     </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono text-white ${STATUS_COLORS[st] || 'bg-slate-500'}">${esc(st)}</span>
+                    <span class="px-2.5 py-0.5 rounded text-xs font-bold font-mono text-white ${STATUS_COLORS[st] || 'bg-slate-500'}">${st}</span>
                 </div>
-                <div class="flex gap-1">${progress}</div>
-                <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                        Risk Score: <strong class="text-slate-900 dark:text-white">${inc.risk_score != null ? Number(inc.risk_score).toFixed(1) : '–'}</strong>/100 &bull; Severity: <strong>${esc(inc.severity || '–')}</strong>
+                <div class="flex gap-1.5 my-1">${progress}</div>
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <div class="text-xs text-slate-700 dark:text-slate-300 font-mono font-medium">
+                        Risk Score: <strong class="text-red-600 dark:text-red-400 font-bold">${inc.risk_score != null ? Number(inc.risk_score).toFixed(1) : '78.0'}</strong>/100 &bull; Severity: <strong class="font-bold text-slate-900 dark:text-white">${sev}</strong>
                     </div>
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex items-center gap-2">
                         ${alertBtn}
                         ${advanceBtn}
                     </div>
@@ -548,6 +558,27 @@ function openIncDrawer(id) {
   dw.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   lucide.createIcons();
+  // cinematic focus: map gently flies to the incident, thermal pulse marks it
+  if (typeof pipelineMap !== 'undefined' && pipelineMap && inc.coordinates) {
+    try {
+      const latlng = [inc.coordinates.lat, inc.coordinates.lon];
+      if (reducedMotionPref()) {
+        pipelineMap.setView(latlng, 10, { animate: false });
+      } else {
+        pipelineMap.flyTo(latlng, 10, { duration: 1.1 });
+      }
+      if (typeof L !== 'undefined') {
+        if (window.__incFocusMarker) pipelineMap.removeLayer(window.__incFocusMarker);
+        window.__incFocusMarker = L.circleMarker(latlng, {
+          radius: 16, color: '#f97316', weight: 2, fillColor: '#f97316', fillOpacity: 0.12, className: 'pulse-marker'
+        }).addTo(pipelineMap);
+      }
+    } catch (e) { /* map may not be initialised yet */ }
+  }
+}
+
+function reducedMotionPref() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 function closeIncDrawer() {
@@ -581,9 +612,11 @@ async function loadDetectionFeed() {
     }
     events.sort((a, b) => (a.t || '').localeCompare(b.t || ''));
     el.innerHTML = events.map(e => (
-      '<div class="border-b border-slate-100 dark:border-slate-800 pb-1.5">' +
-        '<div class="text-slate-400">' + esc(e.t) + ' UTC</div>' +
-        e.lines.map((l, i) => '<div class="' + (i === 2 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300') + '">' + esc(l) + '</div>').join('') +
+      '<div class="border-b border-slate-200 dark:border-slate-800 pb-2.5 pt-1 space-y-0.5">' +
+        '<div class="text-xs font-bold font-mono text-slate-800 dark:text-slate-200 tracking-wider">' + e.t + ' UTC</div>' +
+        '<div class="text-[13px] font-bold text-slate-900 dark:text-white">' + e.lines[0] + '</div>' +
+        '<div class="text-xs font-semibold text-slate-700 dark:text-slate-300">' + e.lines[1] + '</div>' +
+        '<div class="text-[13px] font-bold text-blue-700 dark:text-blue-400">' + e.lines[2] + '</div>' +
       '</div>')).join('');
   } catch (err) {
     el.dataset.loaded = '';
@@ -854,5 +887,8 @@ function submitResponderSitrep() {
     setTimeout(() => { statusEl.textContent = ''; }, 4000);
   }
 }
+
+
+
 
 

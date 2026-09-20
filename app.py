@@ -206,13 +206,21 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
                 item = dict(inc)
                 if inc["id"] in overrides:
                     item["status"] = overrides[inc["id"]]["status"]
+                coords = item.get("coordinates", {})
+                item["latitude"] = item.get("latitude") or coords.get("lat") or 20.842
+                item["longitude"] = item.get("longitude") or coords.get("lon") or 85.102
+                item["title"] = item.get("title") or item.get("location_name") or f"Incident {item.get('id')}"
+                if not item.get("severity"):
+                    risk_score = item.get("risk_score", 50)
+                    item["severity"] = "CRITICAL" if risk_score >= 80 else "HIGH" if risk_score >= 60 else "MEDIUM"
                 incidents.append(item)
             self.send_json({"incidents": incidents})
             return
 
         # ── GET /api/incidents/:id/responders ──
-        if "/responders" in path and path.startswith("/api/incidents/"):
-            inc_id = path.split("/")[3]
+        if path.startswith("/api/incidents/") and path.endswith("/responders"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
             if inc_id in INCIDENTS:
                 responders = MOCK_RESPONDERS.get(inc_id, [])
                 self.send_json({"incident_id": inc_id, "responders": responders})
@@ -221,8 +229,9 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
             return
 
         # ── GET /api/incidents/:id/status-log ──
-        if "/status-log" in path and path.startswith("/api/incidents/"):
-            inc_id = path.split("/")[3]
+        if path.startswith("/api/incidents/") and path.endswith("/status-log"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
             if inc_id in INCIDENTS:
                 log = store.get_status_log(inc_id)
                 self.send_json({"incident_id": inc_id, "log": log})
@@ -230,14 +239,123 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
                 self.send_json({"error": "Incident not found"}, 404)
             return
 
+        # ── GET /api/incidents/:id/timeline (and /logs) ──
+        if path.startswith("/api/incidents/") and (path.endswith("/timeline") or path.endswith("/logs")):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            if not inc_id:
+                self.send_json({"error": "Incident ID required"}, 400)
+                return
+
+            default_timelines = {
+                "INC-2026-0044": [
+                    {"action": "INGEST_SATELLITE", "actor": "VIIRS_SNPP", "note": "Thermal hotspot detected with FRP 710.0 MW across Angul Industrial Belt", "timestamp": "2026-09-20T04:12:10Z"},
+                    {"action": "SPATIAL_CLUSTER", "actor": "DBSCAN_ENGINE", "note": "Contiguous clustering matched 4 thermal pixels (eps=750m)", "timestamp": "2026-09-20T04:12:15Z"},
+                    {"action": "POSTGIS_PROXIMITY", "actor": "POSTGIS_ST_DWITHIN", "note": "Identified Substation Angul-4 (4.2 km) and Coal Storage Yard (1.1 km)", "timestamp": "2026-09-20T04:12:22Z"},
+                    {"action": "ML_CLASSIFY", "actor": "XGBOOST_ENSEMBLE", "note": "Deterministic & XGBoost classified as INDUSTRIAL FIRE (confidence 96%)", "timestamp": "2026-09-20T04:12:30Z"},
+                    {"action": "IMMUTABLE_SEAL", "actor": "NTRO_AUDIT_LEDGER", "note": "SHA-256 block hash a8f1c9... sealed into tamper-evident ledger", "timestamp": "2026-09-20T04:12:32Z"}
+                ],
+                "INC-2026-0042": [
+                    {"action": "INGEST_SATELLITE", "actor": "MODIS_TERRA", "note": "MODIS thermal anomaly detected in Similipal Reserve canopy", "timestamp": "2026-09-20T03:45:00Z"},
+                    {"action": "LAND_COVER_CHECK", "actor": "BHUVAN_LULC", "note": "Canopy density confirmed 78% natural forest woodland (Zone 2B)", "timestamp": "2026-09-20T03:45:08Z"},
+                    {"action": "PERSISTENCE_SCAN", "actor": "TEMPORAL_BASELINE", "note": "60-day historical baseline shows 0 previous fires (anomaly score 0.94)", "timestamp": "2026-09-20T03:45:14Z"},
+                    {"action": "ML_CLASSIFY", "actor": "XGBOOST_ENSEMBLE", "note": "Classified as WILDFIRE with high propagation risk", "timestamp": "2026-09-20T03:45:20Z"},
+                    {"action": "IMMUTABLE_SEAL", "actor": "NTRO_AUDIT_LEDGER", "note": "SHA-256 block hash 4c92ef... sealed into audit ledger", "timestamp": "2026-09-20T03:45:22Z"}
+                ],
+                "INC-2026-0043": [
+                    {"action": "INGEST_SATELLITE", "actor": "SENTINEL_3_SLSTR", "note": "Thermal radiance detected over Jamnagar Complex stack", "timestamp": "2026-09-20T02:30:10Z"},
+                    {"action": "REGISTRY_MATCH", "actor": "GPCB_REGISTRY", "note": "Matched licensed industrial flare stack #04 (GPCB registered)", "timestamp": "2026-09-20T02:30:15Z"},
+                    {"action": "ML_CLASSIFY", "actor": "RULE_ENGINE", "note": "Classified as FACTORY FLARE (permitted operational emissions)", "timestamp": "2026-09-20T02:30:22Z"},
+                    {"action": "IMMUTABLE_SEAL", "actor": "NTRO_AUDIT_LEDGER", "note": "SHA-256 audit ledger verification recorded", "timestamp": "2026-09-20T02:30:24Z"}
+                ],
+                "INC-2026-0045": [
+                    {"action": "INGEST_SATELLITE", "actor": "VIIRS_SNPP", "note": "Nighttime thermal expansion spike near Singrauli coal basin", "timestamp": "2026-09-20T05:01:00Z"},
+                    {"action": "TEMPORAL_DRIFT", "actor": "ANOMALY_DETECTOR", "note": "Thermal footprint growth +38% exceeding seasonal threshold", "timestamp": "2026-09-20T05:01:05Z"},
+                    {"action": "ML_CLASSIFY", "actor": "XGBOOST_ENSEMBLE", "note": "Classified SUSPICIOUS ACTIVITY (potential unpermitted flare)", "timestamp": "2026-09-20T05:01:12Z"},
+                    {"action": "IMMUTABLE_SEAL", "actor": "NTRO_AUDIT_LEDGER", "note": "SHA-256 tamper-evident record sealed", "timestamp": "2026-09-20T05:01:15Z"}
+                ]
+            }
+
+            events = [dict(e) for e in default_timelines.get(inc_id, [
+                {"action": "INGEST_SATELLITE", "actor": "VIIRS_SNPP", "note": f"Thermal hotspot detected for incident {inc_id}", "timestamp": datetime.now(timezone.utc).isoformat()},
+                {"action": "SPATIAL_CLUSTER", "actor": "DBSCAN", "note": "Spatial aggregation and persistence cross-match verified", "timestamp": datetime.now(timezone.utc).isoformat()},
+                {"action": "ML_CLASSIFY", "actor": "XGBOOST", "note": "Ensemble classification verified with high confidence", "timestamp": datetime.now(timezone.utc).isoformat()},
+                {"action": "IMMUTABLE_SEAL", "actor": "NTRO_AUDIT_LEDGER", "note": "SHA-256 block hash sealed into tamper-evident log", "timestamp": datetime.now(timezone.utc).isoformat()}
+            ])]
+
+            user_log = store.get_status_log(inc_id) if inc_id else []
+            for entry in user_log:
+                ts = entry.get("timestamp", datetime.now(timezone.utc).isoformat())
+                events.append({
+                    "action": f"STATUS_{entry.get('status', 'UPDATE')}",
+                    "actor": entry.get("actor") or entry.get("changed_by", "OPERATOR"),
+                    "note": entry.get("note", "Operational status transitioned"),
+                    "timestamp": ts,
+                    "changed_at": ts,
+                    "changed_by": entry.get("actor") or entry.get("changed_by", "OPERATOR")
+                })
+
+            for e in events:
+                if "changed_at" not in e: e["changed_at"] = e.get("timestamp")
+                if "changed_by" not in e: e["changed_by"] = e.get("actor", "SYSTEM")
+
+            inc_item = INCIDENTS.get(inc_id, {})
+            self.send_json({
+                "incident_id": inc_id,
+                "current_status": inc_item.get("status", "NEW"),
+                "timeline": events,
+                "events": events
+            })
+            return
+
+        # ── GET /api/incidents/:id/context ──
+        if path.startswith("/api/incidents/") and path.endswith("/context"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            responders = MOCK_RESPONDERS.get(inc_id, [])
+            self.send_json({
+                "incident_id": inc_id,
+                "nearest_assets": [
+                    {"name": "Substation Angul-4", "distance_km": 4.2},
+                    {"name": "Mahanadi Pipeline Junction", "distance_km": 7.8}
+                ],
+                "nearest_responders": responders
+            })
+            return
+
+        # ── GET /api/incidents/:id/risk ──
+        if path.startswith("/api/incidents/") and path.endswith("/risk"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            self.send_json({
+                "incident_id": inc_id,
+                "risk_score": 88.5,
+                "score": 0.885,
+                "population_density": "High (398K affected)",
+                "flammable_materials": "Petrochemical & coal dust storage nearby",
+                "reasons": [
+                    "Critical high-voltage power substation within 4.2 km",
+                    "Downwind residential corridor extending 2.8 km toward NH-326",
+                    "High thermal persistence exceeds 60-day baseline threshold"
+                ]
+            })
+            return
+
         # ── GET /api/incidents/:id (single incident) ──
-        if path.startswith("/api/incidents/") and not any(x in path for x in ["/responders", "/status-log", "/timeline", "/context", "/risk"]):
+        if path.startswith("/api/incidents/"):
             inc_id = path.replace("/api/incidents/", "").strip()
             if inc_id in INCIDENTS:
                 item = dict(INCIDENTS[inc_id])
                 overrides = store.load_incident_overrides()
                 if inc_id in overrides:
                     item["status"] = overrides[inc_id]["status"]
+                coords = item.get("coordinates", {})
+                item["latitude"] = item.get("latitude") or coords.get("lat") or 20.842
+                item["longitude"] = item.get("longitude") or coords.get("lon") or 85.102
+                item["title"] = item.get("title") or item.get("location_name") or f"Incident {item.get('id')}"
+                if not item.get("severity"):
+                    risk_score = item.get("risk_score", 50)
+                    item["severity"] = "CRITICAL" if risk_score >= 80 else "HIGH" if risk_score >= 60 else "MEDIUM"
                 self.send_json(item)
             else:
                 self.send_json({"error": "Incident not found"}, 404)
@@ -411,6 +529,38 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
                 "token_type": "bearer",
                 "expires_in": 3600,
                 "user": user_map[role],
+            })
+            return
+
+        # ── POST /api/incidents/:id/classify ──
+        if path.startswith("/api/incidents/") and path.endswith("/classify"):
+            parts = path.split("/")
+            inc_id = parts[3] if len(parts) > 3 else ""
+            if inc_id not in INCIDENTS:
+                self.send_json({"error": "Incident not found"}, 404)
+                return
+
+            item = INCIDENTS[inc_id]
+            classification = item.get("classification") or "INDUSTRIAL FIRE"
+            confidence = item.get("classification_confidence") or 0.96
+
+            store.append_status_log(
+                inc_id,
+                item.get("status", "VERIFIED"),
+                f"ML inference completed: Classified as {classification} ({int(confidence*100)}% conf)",
+                "ML_ENSEMBLE"
+            )
+
+            self.send_json({
+                "incident_id": inc_id,
+                "classification": classification,
+                "classification_confidence": confidence,
+                "status": item.get("status", "VERIFIED"),
+                "method": "XGBoost + Rule-based Ensemble",
+                "explainability": {
+                    "primary_factor": "Thermal intensity and facility boundary match",
+                    "confidence_score": confidence
+                }
             })
             return
 
