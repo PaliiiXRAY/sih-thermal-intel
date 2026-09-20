@@ -426,25 +426,27 @@ function renderNtroIncidents() {
             inc.severity === 'MEDIUM' ? 'bg-blue-500' : 'bg-slate-500';
 
         const conf = inc.classification_confidence != null ? `${Math.round(inc.classification_confidence * 100)}%` : 'Rule-based';
-        const title = inc.explanation?.title || `Incident ${inc.id}`;
+        const title = inc.title || inc.location_name || inc.explanation?.title || `Incident ${inc.id}`;
+        const locationSubtitle = inc.location_name || inc.explanation?.region || `${Number(inc.latitude || 20.84).toFixed(3)}°N • ${Number(inc.longitude || 85.10).toFixed(3)}°E`;
 
         return `
         <div onclick="selectNtroIncident('${inc.id}')"
              class="p-3.5 rounded-lg border cursor-pointer transition-all ${
-                 isSel ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/50 shadow-sm' :
+                 isSel ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/50 shadow-sm ring-1 ring-blue-500' :
                  'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'
              }">
             <div class="flex items-center justify-between text-xs">
-                <span class="font-mono font-bold text-slate-900 dark:text-slate-100 text-[13px]">${inc.id}</span>
-                <span class="px-2.5 py-0.5 rounded text-xs font-bold font-mono text-white ${sevColor}">
+                <span class="font-mono font-bold text-blue-700 dark:text-blue-400 text-xs">${inc.id}</span>
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-bold font-mono text-white ${sevColor}">
                     ${inc.severity || 'MEDIUM'}
                 </span>
             </div>
-            <div class="text-[13px] font-bold text-slate-900 dark:text-white mt-1.5 line-clamp-1">${title}</div>
-            <div class="flex items-center justify-between text-xs text-slate-800 dark:text-slate-200 mt-2 font-medium">
+            <div class="text-[13.5px] font-bold text-slate-900 dark:text-white mt-1 leading-snug line-clamp-1">${title}</div>
+            <div class="text-[11.5px] text-slate-600 dark:text-slate-400 font-medium truncate mt-0.5">${locationSubtitle}</div>
+            <div class="flex items-center justify-between text-xs text-slate-800 dark:text-slate-200 mt-2 font-medium border-t border-slate-100 dark:border-slate-800/60 pt-1.5">
                 <span>Class: <strong class="font-bold text-slate-900 dark:text-white">${inc.classification || 'UNCLASSIFIED'}</strong></span>
                 <span>Conf: <strong class="font-bold text-slate-900 dark:text-white">${conf}</strong></span>
-                <span class="px-2 py-0.5 rounded text-[10px] bg-slate-200 dark:bg-slate-700 font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">${inc.status}</span>
+                <span class="px-2 py-0.5 rounded text-[10.5px] bg-slate-200 dark:bg-slate-700 font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">${inc.status}</span>
             </div>
         </div>`;
     }).join('');
@@ -500,7 +502,7 @@ async function updateNtroDetailsPanel(id) {
     const validLat = (rawLat != null && !isNaN(Number(rawLat))) ? Number(rawLat) : 20.842;
     const validLon = (rawLon != null && !isNaN(Number(rawLon))) ? Number(rawLon) : 85.102;
 
-    if (titleEl) titleEl.textContent = inc.explanation?.title || inc.explanation?.region || `Incident ${inc.id}`;
+    if (titleEl) titleEl.textContent = inc.title || inc.location_name || inc.explanation?.title || `Incident ${inc.id}`;
     if (coordsEl) coordsEl.innerHTML = `${validLat.toFixed(3)}&deg;N &bull; ${validLon.toFixed(3)}&deg;E`;
     if (sevEl) {
         sevEl.textContent = inc.severity || 'MEDIUM';
@@ -514,7 +516,7 @@ async function updateNtroDetailsPanel(id) {
     if (confEl) {
         confEl.textContent = inc.classification_confidence != null ? `${Math.round(inc.classification_confidence * 100)}%` : 'Pending';
     }
-    if (facilityEl) facilityEl.textContent = inc.explanation?.region || 'Registered Sector';
+    if (facilityEl) facilityEl.textContent = inc.location_name || inc.explanation?.region || 'Registered Sector';
     if (matchEl) matchEl.textContent = `${inc.classification || 'Thermal Anomaly'} • Sentinel & FIRMS Automated Ingestion Engine`;
 
     // Telemetry stats
@@ -750,22 +752,25 @@ function renderCmdIncidents() {
             inc.severity === 'HIGH' ? 'bg-amber-600 text-white' :
             inc.severity === 'MEDIUM' ? 'bg-blue-600 text-white' : 'bg-slate-500 text-white';
 
-        const title = inc.explanation?.title || `Incident ${inc.id}`;
+        const title = inc.title || inc.location_name || inc.explanation?.title || `Incident ${inc.id}`;
+        const locationSubtitle = inc.location_name || inc.explanation?.region || 'National Surveillance Sector';
         return `
         <div onclick="selectCmdIncident('${inc.id}')"
-             class="p-3 rounded-lg border cursor-pointer transition-all ${
-                 isSel ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 shadow-xs' :
+             class="p-3.5 rounded-lg border cursor-pointer transition-all ${
+                 isSel ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/50 shadow-sm ring-1 ring-blue-500' :
                  'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'
              }">
             <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-slate-900 dark:text-white line-clamp-1">${title}</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono ${sevColor}">
+                <span class="font-mono font-bold text-blue-700 dark:text-blue-400 text-xs">${inc.id}</span>
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-bold font-mono ${sevColor}">
                     ${inc.severity || 'MEDIUM'}
                 </span>
             </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-500 mt-2 font-mono">
-                <span>Priority: <strong class="text-red-600 dark:text-red-400">${inc.risk_score != null ? Number(inc.risk_score).toFixed(1) : '–'}</strong>/100</span>
-                <span class="px-2 py-0.5 rounded text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold">${inc.status}</span>
+            <div class="text-[13.5px] font-bold text-slate-900 dark:text-white mt-1 leading-snug line-clamp-1">${title}</div>
+            <div class="text-[11.5px] text-slate-600 dark:text-slate-400 font-medium truncate mt-0.5">${locationSubtitle}</div>
+            <div class="flex items-center justify-between text-xs text-slate-800 dark:text-slate-200 mt-2 font-medium border-t border-slate-100 dark:border-slate-800/60 pt-1.5">
+                <span>Priority: <strong class="text-red-600 dark:text-red-400 font-bold">${inc.risk_score != null ? Number(inc.risk_score).toFixed(1) : '78.0'}</strong>/100</span>
+                <span class="px-2 py-0.5 rounded text-[10.5px] bg-slate-200 dark:bg-slate-700 font-bold text-slate-800 dark:text-slate-200">${inc.status}</span>
             </div>
         </div>`;
     }).join('');
@@ -787,21 +792,41 @@ function updateCmdDetailsPanel(id) {
     if (!inc) return;
 
     const nameEl = document.getElementById('cmd-sel-name');
+    const locationEl = document.getElementById('cmd-sel-location');
     const typePill = document.getElementById('cmd-sel-type-pill');
     const sevPill = document.getElementById('cmd-sel-severity-pill');
     const popEl = document.getElementById('cmd-sel-pop');
     const typeStat = document.getElementById('cmd-sel-type');
+    const teamsStat = document.getElementById('cmd-sel-teams');
     const dispatchBtn = document.getElementById('btn-dispatch');
 
-    if (nameEl) nameEl.textContent = inc.explanation?.title || inc.id;
+    const rawLat = inc.latitude ?? inc.coordinates?.lat ?? 20.842;
+    const rawLon = inc.longitude ?? inc.coordinates?.lon ?? 85.102;
+
+    const title = inc.title || inc.location_name || inc.explanation?.title || `Incident ${inc.id}`;
+    if (nameEl) nameEl.textContent = title;
+    if (locationEl) locationEl.textContent = `${inc.location_name || 'Active Zone'} • ${Number(rawLat).toFixed(3)}°N, ${Number(rawLon).toFixed(3)}°E`;
     if (typePill) typePill.textContent = inc.classification || 'THERMAL ANOMALY';
-    if (sevPill) sevPill.textContent = inc.severity || 'MEDIUM';
+    if (sevPill) {
+        sevPill.textContent = inc.severity || 'MEDIUM';
+        sevPill.className = `px-2.5 py-0.5 rounded text-[11px] font-bold font-mono text-white ${
+            inc.severity === 'CRITICAL' ? 'bg-red-600' :
+            inc.severity === 'HIGH' ? 'bg-amber-600' :
+            inc.severity === 'MEDIUM' ? 'bg-blue-600' : 'bg-slate-600'
+        }`;
+    }
     if (typeStat) typeStat.textContent = inc.classification || 'Thermal';
-    if (popEl) popEl.textContent = inc.severity === 'CRITICAL' ? '82K' : inc.severity === 'HIGH' ? '45K' : '12K';
+    if (popEl) {
+        const popMap = { 'INC-2026-0042': '14.2K', 'INC-2026-0043': '3.4K', 'INC-2026-0044': '68K', 'INC-2026-0045': '24K' };
+        popEl.textContent = popMap[inc.id] || (inc.severity === 'CRITICAL' ? '82K' : inc.severity === 'HIGH' ? '45K' : '12K');
+    }
+    if (teamsStat) {
+        teamsStat.textContent = inc.id === 'INC-2026-0042' ? '3 / 4' : inc.id === 'INC-2026-0043' ? '1 / 2' : inc.id === 'INC-2026-0044' ? '4 / 6' : '2 / 3';
+    }
 
     if (dispatchBtn) {
         dispatchBtn.onclick = () => dispatchSimulatedAlert(inc.id);
-        dispatchBtn.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i> <span>Dispatch Simulated Alert</span>`;
+        dispatchBtn.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i> <span>Dispatch Simulated Alert (${inc.id})</span>`;
         if (window.lucide) lucide.createIcons();
     }
 }

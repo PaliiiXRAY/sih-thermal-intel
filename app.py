@@ -171,6 +171,13 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
                 item = dict(inc)
                 if inc["id"] in overrides:
                     item["status"] = overrides[inc["id"]]["status"]
+                coords = item.get("coordinates", {})
+                item["latitude"] = item.get("latitude") or coords.get("lat") or 20.842
+                item["longitude"] = item.get("longitude") or coords.get("lon") or 85.102
+                item["title"] = item.get("title") or item.get("location_name") or f"Incident {item.get('id')}"
+                if not item.get("severity"):
+                    risk_score = item.get("risk_score", 50)
+                    item["severity"] = "CRITICAL" if risk_score >= 80 else "HIGH" if risk_score >= 60 else "MEDIUM"
                 incidents.append(item)
             self.send_json({"incidents": incidents})
             return
@@ -307,6 +314,13 @@ class AeroThermalHandler(SimpleHTTPRequestHandler):
                 overrides = store.load_incident_overrides()
                 if inc_id in overrides:
                     item["status"] = overrides[inc_id]["status"]
+                coords = item.get("coordinates", {})
+                item["latitude"] = item.get("latitude") or coords.get("lat") or 20.842
+                item["longitude"] = item.get("longitude") or coords.get("lon") or 85.102
+                item["title"] = item.get("title") or item.get("location_name") or f"Incident {item.get('id')}"
+                if not item.get("severity"):
+                    risk_score = item.get("risk_score", 50)
+                    item["severity"] = "CRITICAL" if risk_score >= 80 else "HIGH" if risk_score >= 60 else "MEDIUM"
                 self.send_json(item)
             else:
                 self.send_json({"error": "Incident not found"}, 404)

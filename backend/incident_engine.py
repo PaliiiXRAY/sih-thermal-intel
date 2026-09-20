@@ -14,8 +14,11 @@ INCIDENTS = {
         "title": "Similipal Forest Fire",
         "timestamp": "11:42 IST (Satellite Overpass)",
         "coordinates": {"lat": 21.8540, "lon": 86.3520},
+        "latitude": 21.8540,
+        "longitude": 86.3520,
         "location_name": "Similipal National Park, Mayurbhanj District, Odisha",
         "classification": "WILDFIRE",
+        "severity": "CRITICAL",
         "confidence": 91,
         "confidence_breakdown": {
             "score": 91,
@@ -75,8 +78,11 @@ INCIDENTS = {
         "title": "Jamnagar Refinery Flare Stack",
         "timestamp": "11:42 IST (Satellite Overpass)",
         "coordinates": {"lat": 22.3585, "lon": 69.8310},
+        "latitude": 22.3585,
+        "longitude": 69.8310,
         "location_name": "Petrochemical Refining Complex, Jamnagar, Gujarat",
         "classification": "FACTORY FLARE",
+        "severity": "MEDIUM",
         "confidence": 94,
         "confidence_breakdown": {
             "score": 94,
@@ -133,8 +139,11 @@ INCIDENTS = {
         "title": "Sangrur Farm Stubble Burning",
         "timestamp": "11:42 IST (Satellite Overpass)",
         "coordinates": {"lat": 30.2480, "lon": 75.8390},
+        "latitude": 30.2480,
+        "longitude": 75.8390,
         "location_name": "Sangrur Agricultural District, Punjab",
         "classification": "CROP SMOKE",
+        "severity": "HIGH",
         "confidence": 89,
         "confidence_breakdown": {
             "score": 89,
@@ -159,20 +168,20 @@ INCIDENTS = {
         },
         "explain_classification": {
             "evidence": [
-                "Cluster of fires detected across open crop fields",
-                "Short-lived burning: seen only 1-2 times (typical crop fire)",
-                "Moderate heat intensity matching open-field straw burning",
-                "Occurring during regional harvest season"
+                "Cluster of low-temperature smoldering spots across harvested paddy field",
+                "Coordinates match registered agricultural zone in Punjab revenue records",
+                "High seasonal correlation: Post-harvest stubble burning window",
+                "Aerosol optical depth confirms localized particulate matter spike"
             ],
             "counter_evidence": [
-                "Smoke near rural road may temporarily reduce visibility"
+                "No registered biomass pelletization facility in immediate vicinity"
             ]
         },
         "local_baseline": {
-            "location_history_passes": 2,
-            "normal_seasonal_range": "0 in off-season, 1-3 in harvest",
-            "anomaly_ratio": "Seasonal Spike",
-            "verdict": "Short-term seasonal farm fire. Air quality alert issued to nearby villages."
+            "location_history_passes": 12,
+            "normal_seasonal_range": "Seasonal spike in October-November",
+            "anomaly_ratio": "Standard seasonal crop clearing",
+            "verdict": "Agricultural stubble burning detected. Ground flying squad alert initiated."
         },
         "wind_corridor": {
             "speed_kmh": 14,
@@ -191,8 +200,11 @@ INCIDENTS = {
         "title": "Singrauli Unregistered Hotspot",
         "timestamp": "11:42 IST (Satellite Overpass)",
         "coordinates": {"lat": 24.1840, "lon": 82.6530},
+        "latitude": 24.1840,
+        "longitude": 82.6530,
         "location_name": "Singrauli Scrubland, MP/UP Border",
         "classification": "SUSPICIOUS ACTIVITY",
+        "severity": "CRITICAL",
         "confidence": 78,
         "confidence_breakdown": {
             "score": 78,
