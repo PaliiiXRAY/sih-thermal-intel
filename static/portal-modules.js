@@ -598,9 +598,11 @@ async function loadDetectionFeed() {
     }
     events.sort((a, b) => (a.t || '').localeCompare(b.t || ''));
     el.innerHTML = events.map(e => (
-      '<div class="border-b border-slate-100 dark:border-slate-800 pb-1.5">' +
-        '<div class="text-slate-400">' + e.t + ' UTC</div>' +
-        e.lines.map((l, i) => '<div class="' + (i === 2 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300') + '">' + l + '</div>').join('') +
+      '<div class="border-b border-slate-200 dark:border-slate-800 pb-2.5 pt-1 space-y-0.5">' +
+        '<div class="text-xs font-bold font-mono text-slate-800 dark:text-slate-200 tracking-wider">' + e.t + ' UTC</div>' +
+        '<div class="text-[13px] font-bold text-slate-900 dark:text-white">' + e.lines[0] + '</div>' +
+        '<div class="text-xs font-semibold text-slate-700 dark:text-slate-300">' + e.lines[1] + '</div>' +
+        '<div class="text-[13px] font-bold text-blue-700 dark:text-blue-400">' + e.lines[2] + '</div>' +
       '</div>')).join('');
   } catch (err) {
     el.dataset.loaded = '';

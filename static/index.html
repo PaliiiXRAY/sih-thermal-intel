@@ -41,15 +41,26 @@ h1,h2,h3,h4{font-family:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-
 #portal-ntro .uppercase{letter-spacing:.06em}
 html:not(.dark) .border-slate-200{border-color:#D5DCE2}
 html:not(.dark) .ntro-banner-img{filter:brightness(2.35) saturate(.42) contrast(.88)}
-html:not(.dark) .text-slate-300{color:#2F3841}
-html:not(.dark) .text-slate-400{color:#3A434D}
-html:not(.dark) .text-slate-500{color:#2F3841}
-html:not(.dark) .text-slate-600{color:#242C34}
-html:not(.dark) .text-slate-700{color:#18212B}
-html:not(.dark) .text-slate-800{color:#18212B}
+
+/* High Royal Dark Slate & Charcoal Typography Palette */
+html:not(.dark) .text-slate-400{color:#1e293b !important}
+html:not(.dark) .text-slate-500{color:#0f172a !important}
+html:not(.dark) .text-slate-600{color:#090d16 !important}
+html:not(.dark) .text-slate-700{color:#05070c !important}
+html:not(.dark) .text-slate-800{color:#020306 !important}
+
+/* Dark mode clear, legible contrast */
+html.dark .text-slate-400{color:#cbd5e1 !important}
+html.dark .text-slate-500{color:#94a3b8 !important}
+html.dark .text-slate-600{color:#64748b !important}
+
+/* Royal legibility scale: larger, crisper small labels and telemetry */
+.text-\[10px\]{font-size:11.5px !important;line-height:1.4 !important}
+.text-\[11px\]{font-size:12.5px !important;line-height:1.45 !important}
+.text-xs{font-size:13px !important;line-height:1.5 !important}
 </style>
 </head>
-<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-orange-500 selection:text-white transition-colors duration-150">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-orange-500 selection:text-white transition-colors duration-150">
 
 <!-- AUTH GATE (Cinematic Split Screen, Role Authentication) -->
 <div id="auth-gate" class="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm flex">
@@ -190,7 +201,7 @@ html:not(.dark) .text-slate-800{color:#18212B}
                         <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                             Thermal Anomaly Intelligence
                         </h2>
-                        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        <p class="text-sm sm:text-[15px] font-semibold text-slate-800 dark:text-slate-200">
                             Satellite pass every 3 hrs &bull; India coverage &bull; 247 events today
                         </p>
                     </div>
@@ -206,22 +217,22 @@ html:not(.dark) .text-slate-800{color:#18212B}
             <div class="flex flex-wrap items-center gap-x-8 gap-y-3 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3.5 bg-white dark:bg-slate-900 shadow-sm">
                 <div class="flex items-baseline gap-2">
                     <span class="text-xl font-bold font-mono text-slate-900 dark:text-white" id="ntro-hotspots-count">–</span>
-                    <span class="text-xs text-slate-500 dark:text-slate-400">hotspots analyzed</span>
+                    <span class="text-[13px] font-bold text-slate-800 dark:text-slate-200">hotspots analyzed</span>
                 </div>
-                <span class="w-px h-6 bg-slate-200 dark:bg-slate-800 hidden sm:block"></span>
+                <span class="w-px h-6 bg-slate-200 dark:border-slate-800 hidden sm:block"></span>
                 <div class="flex items-baseline gap-2">
                     <span class="text-xl font-bold font-mono text-slate-900 dark:text-white" id="ntro-auto-classified">–</span>
-                    <span class="text-xs text-slate-500 dark:text-slate-400" id="ntro-classification-rate">auto-classified</span>
+                    <span class="text-[13px] font-bold text-slate-800 dark:text-slate-200" id="ntro-classification-rate">auto-classified</span>
                 </div>
-                <span class="w-px h-6 bg-slate-200 dark:bg-slate-800 hidden sm:block"></span>
+                <span class="w-px h-6 bg-slate-200 dark:border-slate-800 hidden sm:block"></span>
                 <div class="flex items-baseline gap-2">
                     <span class="text-xl font-bold font-mono text-red-600 dark:text-red-400" id="ntro-critical-count">–</span>
-                    <span class="text-xs text-slate-500 dark:text-slate-400">critical — action needed</span>
+                    <span class="text-[13px] font-bold text-slate-800 dark:text-slate-200">critical — action needed</span>
                 </div>
-                <span class="w-px h-6 bg-slate-200 dark:bg-slate-800 hidden sm:block"></span>
+                <span class="w-px h-6 bg-slate-200 dark:border-slate-800 hidden sm:block"></span>
                 <div class="flex items-baseline gap-2">
                     <span class="text-xl font-bold font-mono text-slate-900 dark:text-white" id="ntro-avg-confidence">–</span>
-                    <span class="text-xs text-slate-500 dark:text-slate-400">avg model score</span>
+                    <span class="text-[13px] font-bold text-slate-800 dark:text-slate-200">avg model score</span>
                 </div>
             </div>
 
@@ -278,7 +289,7 @@ html:not(.dark) .text-slate-800{color:#18212B}
                             <span class="font-mono text-slate-400" id="pipeline-result-count">0 results</span>
                         </div>
                         <div id="pipeline-results" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                            <div class="text-xs text-slate-400 dark:text-slate-500 py-8 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                            <div class="text-[13.5px] font-semibold text-slate-800 dark:text-slate-200 py-10 text-center border border-dashed border-slate-300 dark:border-slate-700 rounded-lg">
                                 Select a scenario and run the pipeline to classify FIRMS hotspots.
                             </div>
                         </div>
@@ -291,8 +302,8 @@ html:not(.dark) .text-slate-800{color:#18212B}
                 <!-- Left: Incident Log -->
                 <div class="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
                     <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 text-xs font-bold">
-                        <span class="text-slate-800 dark:text-slate-200">Incident Log</span>
-                        <span class="text-slate-400 font-mono" id="ntro-log-count">6 events</span>
+                        <span class="text-slate-800 dark:text-slate-200 text-[13.5px]">Incident Log</span>
+                        <span class="text-slate-600 dark:text-slate-300 font-mono text-xs font-semibold" id="ntro-log-count">6 events</span>
                     </div>
 
                     <div class="space-y-2" id="ntro-incident-list">
@@ -309,57 +320,88 @@ html:not(.dark) .text-slate-800{color:#18212B}
                         
                         <div class="relative z-10 flex flex-wrap items-center justify-between w-full gap-2">
                             <div>
-                                <span class="px-2 py-0.5 rounded bg-black/60 text-slate-200 text-[10px] font-mono block mb-1" id="ntro-facility-tag">Dense Forest Reserve</span>
-                                <h3 class="text-lg font-bold text-white tracking-wide" id="ntro-detail-title">Malkangiri, Odisha</h3>
-                                <p class="text-xs font-mono text-slate-300" id="ntro-detail-coords">18.92&deg;N &bull; 82.10&deg;E</p>
+                                <span class="px-2.5 py-1 rounded bg-black/70 text-slate-200 text-xs font-semibold block mb-1" id="ntro-facility-tag">Dense Forest Reserve</span>
+                                <h3 class="text-xl font-bold text-white tracking-wide" id="ntro-detail-title">Malkangiri, Odisha</h3>
+                                <p class="text-xs sm:text-[13px] font-mono text-slate-200 font-bold" id="ntro-detail-coords">18.920&deg;N &bull; 82.100&deg;E</p>
                             </div>
-                            <span class="px-2.5 py-1 rounded bg-amber-500 text-slate-950 text-xs font-bold font-mono uppercase" id="ntro-detail-severity">HIGH</span>
+                            <span class="px-3 py-1 rounded bg-amber-500 text-slate-950 text-xs font-black font-mono uppercase" id="ntro-detail-severity">HIGH</span>
                         </div>
                     </div>
 
                     <!-- Tabs: Classification vs Intelligence -->
-                    <div class="border-b border-slate-200 dark:border-slate-800 pb-1 flex gap-4 text-xs font-bold">
-                        <button class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 pb-2">Classification</button>
-                        <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 pb-2">Intelligence</button>
+                    <div class="border-b border-slate-200 dark:border-slate-800 pb-1 flex gap-6 text-[13.5px] font-bold">
+                        <button id="tab-ntro-sub-class" onclick="switchNtroDetailTab('classification')" class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 pb-2 transition-all cursor-pointer">Classification</button>
+                        <button id="tab-ntro-sub-intel" onclick="switchNtroDetailTab('intelligence')" class="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white pb-2 transition-all cursor-pointer">Intelligence Dossier</button>
                     </div>
 
-                    <!-- AI Confidence & Classification -->
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-xs text-slate-400 block font-medium">Classification</span>
-                            <span class="text-base font-bold text-slate-900 dark:text-white" id="ntro-detail-class">Wildfire</span>
+                    <!-- TAB 1: Classification -->
+                    <div id="panel-ntro-classification" class="space-y-4">
+                        <!-- AI Confidence & Classification -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs text-slate-600 dark:text-slate-300 block font-bold uppercase tracking-wider">Classification</span>
+                                <span class="text-lg font-bold text-slate-900 dark:text-white" id="ntro-detail-class">Wildfire</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-600 dark:text-slate-300 block font-bold uppercase tracking-wider">AI Confidence</span>
+                                <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono" id="ntro-detail-confidence">91%</span>
+                            </div>
                         </div>
-                        <div class="text-right">
-                            <span class="text-xs text-slate-400 block font-medium">AI Confidence</span>
-                            <span class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono" id="ntro-detail-confidence">91%</span>
+
+                        <!-- Telemetry Stats -->
+                        <div class="grid grid-cols-3 gap-3 p-3.5 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-sans">
+                            <div>
+                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block tracking-wider">Peak Temp</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="ntro-detail-temp">623&deg;C</span>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block tracking-wider">Persistence</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="ntro-detail-area">15.0%</span>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block tracking-wider">Source</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="ntro-detail-source">VIIRS</span>
+                            </div>
+                        </div>
+
+                        <!-- Facility Database Match & Wind Spread Vector -->
+                        <div class="space-y-2.5 text-xs">
+                            <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11.5px] text-slate-600 dark:text-slate-400 uppercase font-bold tracking-wider block">Facility Context Match</span>
+                                <span class="text-slate-900 dark:text-slate-100 font-semibold text-[13px]" id="ntro-detail-match">Dense Forest Reserve &bull; Odisha Industrial &amp; Forest Database</span>
+                            </div>
+                            <div id="ntro-detail-wind" class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-900/60 flex items-center justify-between text-blue-950 dark:text-blue-200 text-xs font-medium">
+                                <span>Surface Wind: <strong class="font-bold">NE at 18 km/h</strong></span>
+                                <span>Downwind Corridor: <strong class="font-bold">2.8 km (toward NH-326)</strong></span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Telemetry Stats -->
-                    <div class="grid grid-cols-3 gap-3 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-mono">
-                        <div>
-                            <span class="text-[10px] text-slate-400 uppercase block">Peak Temp</span>
-                            <span class="text-sm font-bold text-slate-900 dark:text-white" id="ntro-detail-temp">623&deg;C</span>
+                    <!-- TAB 2: Intelligence Dossier (Deep Telemetry, Explainability, Exposure) -->
+                    <div id="panel-ntro-intelligence" class="hidden space-y-3 text-xs">
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Explainability Dossier</span>
+                                <span class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300" id="intel-dossier-id">EVIDENCE PANEL</span>
+                            </div>
+                            <div id="intel-evidence-list" class="space-y-1.5 text-slate-800 dark:text-slate-200 font-medium">
+                                <!-- Populated dynamically by JS -->
+                            </div>
                         </div>
-                        <div>
-                            <span class="text-[10px] text-slate-400 uppercase block">Area</span>
-                            <span class="text-sm font-bold text-slate-900 dark:text-white" id="ntro-detail-area">12.8 km&sup2;</span>
-                        </div>
-                        <div>
-                            <span class="text-[10px] text-slate-400 uppercase block">Source</span>
-                            <span class="text-sm font-bold text-slate-900 dark:text-white" id="ntro-detail-source">VIIRS</span>
-                        </div>
-                    </div>
 
-                    <!-- Facility Database Match & Wind Spread Vector -->
-                    <div class="space-y-2 text-xs">
-                        <div class="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800">
-                            <span class="text-[10px] text-slate-400 uppercase font-mono block">Facility match</span>
-                            <span class="text-slate-800 dark:text-slate-200 font-medium" id="ntro-detail-match">Dense Forest Reserve &bull; Odisha Industrial &amp; Forest Database</span>
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1.5">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Historical Baseline &amp; Persistence</span>
+                            <p class="text-slate-800 dark:text-slate-200 font-medium text-[12.5px]" id="intel-baseline-verdict">60-day baseline: No persistent flare signature recorded. Confirms transient anomalous combustion.</p>
                         </div>
-                        <div id="ntro-detail-wind" class="p-2.5 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-900/60 flex items-center justify-between text-blue-900 dark:text-blue-300 text-[11px] font-mono">
-                            <span>Surface Wind: <strong>NE at 18 km/h</strong></span>
-                            <span>Downwind Corridor: <strong>2.8 km (toward NH-326)</strong></span>
+
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1.5">
+                            <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                                <span>Surrounding Infrastructure &amp; Exposure</span>
+                                <span class="text-amber-700 dark:text-amber-400 font-bold" id="intel-assets-count">2 Assets At Risk</span>
+                            </div>
+                            <div id="intel-assets-list" class="space-y-1.5 text-slate-800 dark:text-slate-200 font-medium text-[12.5px]">
+                                <!-- Populated dynamically by JS -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -405,12 +447,12 @@ html:not(.dark) .text-slate-800{color:#18212B}
 
             <!-- Detection Feed (demo playback of the real pipeline) -->
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-4">
-                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 text-[13.5px] font-bold text-slate-900 dark:text-white">
                     <div class="flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i> Pipeline Detection Feed</div>
-                    <span class="font-mono text-[10px] text-slate-400" title="Chronological replay of the classification pipeline over cached scenarios">DEMO PLAYBACK</span>
+                    <span class="font-mono text-xs font-bold text-slate-600 dark:text-slate-300" title="Chronological replay of the classification pipeline over cached scenarios">DEMO PLAYBACK</span>
                 </div>
-                <div id="detection-feed" class="mt-3 space-y-1.5 font-mono text-[11px] max-h-56 overflow-y-auto">
-                    <div class="text-slate-400">Replaying pipeline events&hellip;</div>
+                <div id="detection-feed" class="mt-3 space-y-3 text-xs sm:text-[13px] max-h-64 overflow-y-auto font-sans pr-1">
+                    <div class="text-slate-700 dark:text-slate-300 font-medium">Replaying pipeline events&hellip;</div>
                 </div>
             </div>
         </div>
@@ -441,13 +483,13 @@ html:not(.dark) .text-slate-800{color:#18212B}
                     <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                         Incident Command Center
                     </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-1">
                         Real-time situational awareness &bull; Sep 6, 2026 &bull; All states
                     </p>
                 </div>
 
-                <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-bold font-mono">
-                    <span class="w-2 h-2 rounded-full bg-red-500 live-pulse"></span>
+                <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-bold font-mono">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 live-pulse"></span>
                     <span id="cmd-active-alert-pill">3 Critical Incidents Active</span>
                 </div>
             </div>
@@ -455,27 +497,27 @@ html:not(.dark) .text-slate-800{color:#18212B}
             <!-- 4 Stat Cards -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
-                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Active Incidents</span>
+                    <span class="text-[13px] text-slate-800 dark:text-slate-200 font-bold">Active Incidents</span>
                     <div class="text-3xl font-bold text-orange-600 dark:text-orange-400 font-mono">5</div>
-                    <span class="text-[11px] text-slate-500 font-medium">Across 4 states</span>
+                    <span class="text-xs text-slate-600 dark:text-slate-400 font-medium">Across 4 states</span>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
-                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">People at Risk</span>
+                    <span class="text-[13px] text-slate-800 dark:text-slate-200 font-bold">People at Risk</span>
                     <div class="text-3xl font-bold text-red-600 dark:text-red-400 font-mono">398K</div>
-                    <span class="text-[11px] text-slate-500 font-medium">In affected zones</span>
+                    <span class="text-xs text-slate-600 dark:text-slate-400 font-medium">In affected zones</span>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
-                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Teams Deployed</span>
+                    <span class="text-[13px] text-slate-800 dark:text-slate-200 font-bold">Teams Deployed</span>
                     <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 font-mono" id="cmd-stat-teams">9</div>
-                    <span class="text-[11px] text-slate-500 font-medium">of 15 NDRF teams</span>
+                    <span class="text-xs text-slate-600 dark:text-slate-400 font-medium">of 15 NDRF teams</span>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-1">
-                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Relief Camps</span>
+                    <span class="text-[13px] text-slate-800 dark:text-slate-200 font-bold">Relief Camps</span>
                     <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">6</div>
-                    <span class="text-[11px] text-slate-500 font-medium">32,000 capacity available</span>
+                    <span class="text-xs text-slate-600 dark:text-slate-400 font-medium">32,000 capacity available</span>
                 </div>
             </div>
 
@@ -658,18 +700,18 @@ html:not(.dark) .text-slate-800{color:#18212B}
                         <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                             Responder Operations
                         </h2>
-                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                        <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-1">
                             Assigned mission, site conditions and next actions.
                         </p>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2 text-xs">
-                        <label for="resp-incident-select" class="font-bold text-slate-700 dark:text-slate-300">Active Task:</label>
+                        <label for="resp-incident-select" class="font-bold text-slate-800 dark:text-slate-200 text-[13px]">Active Task:</label>
                         <select id="resp-incident-select" onchange="onResponderIncidentChange(this.value)" class="px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-xs shadow-xs focus:ring-2 focus:ring-orange-500 outline-hidden">
                             <option value="INC-2026-0044">INC-2026-0044 &bull; Angul Thermal Plant (Critical)</option>
                             <option value="INC-2026-0042">INC-2026-0042 &bull; Similipal Forest (High)</option>
                         </select>
-                        <span class="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold font-mono flex items-center gap-1.5">
+                        <span class="px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold font-mono flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span> FIELD READY
                         </span>
                     </div>
@@ -680,9 +722,9 @@ html:not(.dark) .text-slate-800{color:#18212B}
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
                     <div>
-                        <span class="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold block">Assigned Mission</span>
+                        <span class="text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300 font-bold block">Assigned Mission</span>
                         <h3 class="text-xl font-black text-slate-900 dark:text-white" id="resp-title">Angul Thermal Power &amp; Coal Storage Yard</h3>
-                        <p class="text-xs text-slate-600 dark:text-slate-400" id="resp-location">Angul Industrial Belt, Odisha &bull; Target Sector 4</p>
+                        <p class="text-xs sm:text-[13px] text-slate-700 dark:text-slate-300 font-medium" id="resp-location">Angul Industrial Belt, Odisha &bull; Target Sector 4</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <span id="resp-badge-type" class="px-2.5 py-1 rounded-md bg-red-100 dark:bg-red-950/70 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs font-bold font-mono">INDUSTRIAL FIRE</span>
@@ -693,21 +735,21 @@ html:not(.dark) .text-slate-800{color:#18212B}
                 <!-- Mission Telemetry -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
-                        <span class="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400 font-bold block">Target GPS</span>
+                        <span class="text-xs uppercase font-bold text-slate-700 dark:text-slate-300 block tracking-wider">Target GPS</span>
                         <div class="text-sm font-black font-mono text-slate-900 dark:text-white mt-0.5" id="resp-coords">20.8420°N &bull; 85.1020°E</div>
-                        <button onclick="copyResponderCoords()" class="mt-1.5 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                        <button onclick="copyResponderCoords()" class="mt-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
                             <i data-lucide="copy" class="w-3 h-3"></i> Copy GPS
                         </button>
                     </div>
 
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
-                        <span class="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400 font-bold block">Thermal Power (FRP)</span>
+                        <span class="text-xs uppercase font-bold text-slate-700 dark:text-slate-300 block tracking-wider">Thermal Power (FRP)</span>
                         <div class="text-sm font-black font-mono text-orange-600 dark:text-orange-400 mt-0.5" id="resp-frp">710.0 MW</div>
-                        <span class="text-[10px] text-slate-500 font-medium">VIIRS Overpass Conf: 96%</span>
+                        <span class="text-[11.5px] text-slate-700 dark:text-slate-300 font-medium">VIIRS Overpass Conf: 96%</span>
                     </div>
 
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
-                        <span class="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400 font-bold block">Hazard Rating</span>
+                        <span class="text-xs uppercase font-bold text-slate-700 dark:text-slate-300 block tracking-wider">Hazard Rating</span>
                         <div class="text-sm font-black font-mono text-red-600 dark:text-red-400 mt-0.5" id="resp-hazard">HIGH (Risk 96/100)</div>
                         <span class="text-[10px] text-slate-500 font-medium">Secondary blast / coal dust</span>
                     </div>
@@ -823,7 +865,7 @@ html:not(.dark) .text-slate-800{color:#18212B}
                         <h2 class="text-2xl sm:text-4xl font-black tracking-tight" id="txt-citizen-title">
                             Disaster Help Services
                         </h2>
-                        <p class="text-xs sm:text-sm text-slate-300 mt-1 font-normal" id="txt-citizen-subtitle">
+                        <p class="text-sm sm:text-[15px] text-slate-200 mt-1 font-medium" id="txt-citizen-subtitle">
                             Find shelter, food, evacuation routes and emergency contacts near you.
                         </p>
                     </div>
